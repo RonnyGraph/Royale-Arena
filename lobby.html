@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Royale Arena - Lobby</title>
+  <style>
+    /* ============================================================
+       RESET & VARIABLES
+    ============================================================ */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-main:      #1a1a2e;
+      --bg-panel:     #16213e;
+      --bg-card:      #0f3460;
+      --bg-input:     #1a1a2e;
+      --accent:       #e94560;
+      --accent-hover: #ff5f7a;
+      --text:         #ffffff;
+      --text-muted:   #8888aa;
+      --border:       #2a2a4a;
+      --log-color:    #ff4444;
+      --success:      #4cc9f0;
+      --danger:       #e94560;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--bg-main);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ============================================================
+       ÉCRAN DE CONNEXION
+    ============================================================ */
+    #login-screen {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      gap: 20px;
+    }
+
+    #login-screen h1 { color: var(--accent); font-size: 2.5em; }
+
+    #login-screen .box {
+      background: var(--bg-panel);
+      padding: 30px 40px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      min-width: 300px;
+    }
+
+    #login-screen input {
+      padding: 10px;
+      border-radius: 5px;
+      border: none;
+      font-size: 16px;
+    }
+
+    #login-screen button {
+      padding: 10px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    #login-screen button:hover { background: var(--accent-hover); }
+
+    #login-error { color: #ff4c4c; font-size: 14px; min-height: 18px; }
+
+    /* ============================================================
+       LOBBY — STRUCTURE GLOBALE
+    ============================================================ */
+    #lobby {
+      display: none; /* Caché jusqu'à connexion */
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    #lobby header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 24px;
+      background: var(--bg-panel);
+      border-bottom: 2px solid var(--accent);
+      flex-shrink: 0;
+    }
+
+    #lobby header h1 { color: var(--accent); font-size: 1.4rem; letter-spacing: 2px; }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+    }
+
+    .user-info span { color: var(--text-muted); }
+    .user-info b    { color: var(--text); }
+
+    .user-info button {
+      background: var(--success);
+      color: #000;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 700;
+      transition: opacity 0.2s;
+    }
+
+    .user-info button:hover { opacity: 0.85; }
+
+    /* ── 3 colonnes ── */
+    .lobby-layout {
+      display: grid;
+      grid-template-columns: 260px 1fr 220px;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ============================================================
+       COLONNE GAUCHE
+    ============================================================ */
+    .col-left {
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      gap: 12px;
+      overflow-y: auto;
+    }
+
+    .btn-main {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 700;
+      transition: all 0.2s;
+    }
+
+    .btn-create { background: var(--accent); color: white; }
+    .btn-create:hover { background: var(--accent-hover); }
+
+    .btn-join {
+      background: var(--bg-card);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-join:hover { border-color: var(--accent); color: var(--accent-hover); }
+
+    .divider { border-color: var(--border); margin: 4px 0; }
+
+    .section-title {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .parties-list { display: flex; flex-direction: column; gap: 8px; }
+
+    /* ============================================================
+       COLONNE CENTRE
+    ============================================================ */
+    .col-center {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Barre du haut */
+    .chat-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .chat-topbar h2 { font-size: 0.95rem; color: var(--text-muted); font-weight: 500; }
+
+    .btn-players {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+
+    .btn-players:hover { border-color: var(--accent); color: var(--accent-hover); }
+
+    .online-dot {
+      width: 8px; height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    /* Panneau joueurs dépliable */
+    .players-panel {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.35s ease, padding 0.35s ease;
+      padding: 0 16px;
+    }
+
+    .players-panel.open { max-height: 200px; padding: 12px 16px; }
+
+    .players-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    /* Messages */
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .chat-messages::-webkit-scrollbar { width: 6px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .msg {
+      font-size: 0.88rem;
+      line-height: 1.5;
+      padding: 4px 0;
+    }
+
+    .msg-author { color: var(--accent-hover); font-weight: 700; margin-right: 6px; }
+    .msg-time   { color: var(--text-muted); font-size: 0.75rem; margin-left: 8px; }
+
+    .msg-log {
+      font-size: 0.82rem;
+      color: var(--log-color);
+      font-style: italic;
+      font-weight: 700;
+    }
+
+    /* Input */
+    .chat-input-zone {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      background: var(--bg-panel);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .chat-input-zone input {
+      flex: 1;
+      padding: 8px 12px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .chat-input-zone input:focus { border-color: var(--accent); }
+    .chat-input-zone input::placeholder { color: var(--text-muted); }
+
+    .btn-send {
+      padding: 8px 16px;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-send:hover { background: var(--accent-hover); }
+
+    /* ============================================================
+       COLONNE DROITE
+    ============================================================ */
+    .col-right {
+      background: var(--bg-panel);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      gap: 10px;
+    }
+
+    .btn-tab {
+      width: 100%;
+      padding: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s;
+    }
+
+    .btn-tab:hover { border-color: var(--accent); color: var(--accent-hover); }
+    .btn-tab.active { border-color: var(--accent); background: #1e1e40; color: var(--accent-hover); }
+
+    /* ============================================================
+       PANNEAU LATÉRAL DROIT
+    ============================================================ */
+    .right-panel {
+      position: fixed;
+      top: 0; right: 0;
+      width: 480px;
+      height: 100vh;
+      background: var(--bg-panel);
+      border-left: 2px solid var(--accent);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+    }
+
+    .right-panel.open { transform: translateX(0); }
+
+    .right-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .right-panel-header h3 { font-size: 1rem; color: var(--accent-hover); }
+
+    .btn-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.3rem;
+      cursor: pointer;
+      padding: 2px 8px;
+      border-radius: 4px;
+      transition: color 0.2s;
+    }
+
+    .btn-close:hover { color: var(--danger); }
+
+    .right-panel-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .right-panel-content::-webkit-scrollbar { width: 6px; }
+    .right-panel-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ============================================================
+       MODALS
+    ============================================================ */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px 32px;
+      min-width: 320px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .modal h3 { color: var(--accent-hover); font-size: 1.1rem; }
+    .modal p   { color: var(--text-muted); font-size: 0.88rem; }
+
+    .modal input {
+      padding: 10px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 1rem;
+      outline: none;
+      width: 100%;
+    }
+
+    .modal input:focus { border-color: var(--accent); }
+
+    .code-display {
+      font-size: 2rem;
+      font-weight: 900;
+      letter-spacing: 8px;
+      color: var(--accent-hover);
+      text-align: center;
+      padding: 12px;
+      background: var(--bg-card);
+      border-radius: 8px;
+      display: none; /* Affiché après création */
+    }
+
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+    .btn-cancel {
+      padding: 8px 16px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+
+    .btn-cancel:hover { border-color: var(--danger); color: var(--danger); }
+
+    .btn-confirm {
+      padding: 8px 16px;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: background 0.2s;
+    }
+
+    .btn-confirm:hover { background: var(--accent-hover); }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       ÉCRAN DE CONNEXION
+  ============================================================ -->
+  <div id="login-screen">
+    <h1>🎴 Royale Arena</h1>
+    <div class="box">
+      <label for="pseudo-input">Choisis ton pseudo :</label>
+      <input type="text" id="pseudo-input" maxlength="20" placeholder="Ex: Mario64" />
+      <button id="login-btn">Entrer dans le lobby</button>
+      <div id="login-error"></div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       LOBBY PRINCIPAL
+  ============================================================ -->
+  <div id="lobby">
+
+    <!-- Header -->
+    <header>
+      <h1>⚔️ Royale Arena</h1>
+      <div class="user-info">
+        <span>Connecté en tant que <b id="current-pseudo"></b></span>
+        <button id="change-pseudo-btn">✏️ Changer</button>
+      </div>
+    </header>
+
+    <!-- 3 colonnes -->
+    <div class="lobby-layout">
+
+      <!-- ================== GAUCHE ================== -->
+      <aside class="col-left">
+        <button class="btn-main btn-create" onclick="ouvrirModalCreer()">＋ Créer une partie</button>
+        <button class="btn-main btn-join"   onclick="ouvrirModalRejoindre()">→ Rejoindre une partie</button>
+        <hr class="divider"/>
+        <div class="section-title">🎮 Parties en cours</div>
+        <div class="parties-list" id="parties-list">
+          <div style="color:var(--text-muted); font-size:0.8rem;">Aucune partie en cours...</div>
+        </div>
+      </aside>
+
+      <!-- ================== CENTRE ================== -->
+      <main class="col-center">
+
+        <div class="chat-topbar">
+          <h2>💬 Chat Global</h2>
+          <button class="btn-players" onclick="toggleJoueurs()">
+            <span class="online-dot"></span>
+            <span id="btn-players-label">Joueurs connectés</span>
+          </button>
+        </div>
+
+        <div class="players-panel" id="players-panel">
+          <div class="players-grid" id="players-grid"></div>
+        </div>
+
+        <div class="chat-messages" id="chat-messages"></div>
+
+        <div class="chat-input-zone">
+          <input
+            type="text"
+            id="chat-input"
+            placeholder="Écris un message..."
+            maxlength="300"
+            onkeydown="if(event.key==='Enter') envoyerMessage()"
+          />
+          <button class="btn-send" onclick="envoyerMessage()">Envoyer</button>
+        </div>
+
+      </main>
+
+      <!-- ================== DROITE ================== -->
+      <aside class="col-right">
+        <div class="section-title">Ressources</div>
+        <button class="btn-tab" id="btn-regles"  onclick="ouvrirPanel('regles')">📖 Règles du jeu</button>
+        <button class="btn-tab" id="btn-galerie" onclick="ouvrirPanel('galerie')">🎴 Galerie des cartes</button>
+      </aside>
+
+    </div>
+  </div>
+
+  <!-- ============================================================
+       PANNEAU LATÉRAL DROIT
+       Le contenu est chargé dynamiquement via fetch()
+       depuis regles.html ou galerie.html
+  ============================================================ -->
+  <div class="right-panel" id="right-panel">
+    <div class="right-panel-header">
+      <h3 id="right-panel-title">Panneau</h3>
+      <button class="btn-close" onclick="fermerPanel()">✕</button>
+    </div>
+    <!-- Zone de contenu injectée dynamiquement -->
+    <div class="right-panel-content" id="right-panel-content"></div>
+  </div>
+
+  <!-- ============================================================
+       MODAL — CRÉER UNE PARTIE
+  ============================================================ -->
+  <div class="modal-overlay" id="modal-creer">
+    <div class="modal">
+      <h3>＋ Créer une partie</h3>
+      <p>Un code unique sera généré. Partagez-le à votre adversaire !</p>
+      <div class="code-display" id="code-display">——</div>
+      <div class="modal-actions">
+        <button class="btn-cancel"  onclick="fermerModal('modal-creer')">Fermer</button>
+        <button class="btn-confirm" id="btn-creer-confirm" onclick="creerPartie()">Créer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL — REJOINDRE UNE PARTIE
+  ============================================================ -->
+  <div class="modal-overlay" id="modal-rejoindre">
+    <div class="modal">
+      <h3>→ Rejoindre une partie</h3>
+      <p>Entre le code de la partie que tu veux rejoindre.</p>
+      <input
+        type="text"
+        id="input-code-rejoindre"
+        placeholder="Ex : AB12CD"
+        maxlength="6"
+        style="text-transform:uppercase; letter-spacing:3px; font-size:1.1rem; text-align:center;"
+      />
+      <div class="modal-actions">
+        <button class="btn-cancel"  onclick="fermerModal('modal-rejoindre')">Annuler</button>
+        <button class="btn-confirm" onclick="rejoindrePartie()">Rejoindre</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SCRIPT PRINCIPAL
+  ============================================================ -->
+  <script type="module">
+
+    // ── Imports Firebase ──
+    import { db, app } from './firebase-config.js';
+    import {
+      getAuth, signInAnonymously, onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+    import {
+      doc, setDoc, getDoc
+    } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+    const auth = getAuth(app);
+
+    // ── Références DOM ──
+    const loginScreen     = document.getElementById('login-screen');
+    const lobbyEl         = document.getElementById('lobby');
+    const pseudoInput     = document.getElementById('pseudo-input');
+    const loginBtn        = document.getElementById('login-btn');
+    const loginError      = document.getElementById('login-error');
+    const currentPseudoEl = document.getElementById('current-pseudo');
+    const changePseudoBtn = document.getElementById('change-pseudo-btn');
+
+    // ── Variables globales ──
+    let currentUserId = null;
+    let currentPseudo = null;
+    let panelOuvert   = null; // 'regles' | 'galerie' | null
+
+    // ── Cache des panneaux chargés ──
+    // Évite de re-fetcher le fichier HTML à chaque ouverture
+    const panneauCache = {};
+
+    // Titres affichés dans le header du panneau
+    const panneauTitres = {
+      regles:  '📖 Règles du jeu',
+      galerie: '🎴 Galerie des cartes'
+    };
+
+    // Fichiers HTML externes à charger
+    const panneauFichiers = {
+      regles:  'regles.html',
+      galerie: 'galerie.html'
+    };
+
+    // ==========================================================
+    // AUTH ANONYME FIREBASE
+    // ==========================================================
+    signInAnonymously(auth).catch((err) => {
+      loginError.textContent = "Erreur de connexion : " + err.message;
+      console.error(err);
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) return;
+      currentUserId = user.uid;
+      console.log("✅ Auth anonyme OK, userId =", currentUserId);
+
+      // Vérifie si un pseudo existe déjà en Firestore pour cet utilisateur
+      const userDocRef = doc(db, "users", currentUserId);
+      const userSnap   = await getDoc(userDocRef);
+
+      if (userSnap.exists() && userSnap.data().pseudo) {
+        // Pseudo trouvé → connexion directe sans passer par l'écran login
+        entrerDansLobby(userSnap.data().pseudo);
+      }
+      // Sinon l'écran de connexion reste affiché
+    });
+
+    // ==========================================================
+    // BOUTON LOGIN — Validation du pseudo
+    // ==========================================================
+    loginBtn.addEventListener('click', async () => {
+      const pseudo = pseudoInput.value.trim();
+
+      // Validation basique
+      if (pseudo.length < 2) {
+        loginError.textContent = "Le pseudo doit faire au moins 2 caractères.";
+        return;
+      }
+
+      loginError.textContent = '';
+
+      try {
+        // Sauvegarde le pseudo en Firestore
+        const userDocRef = doc(db, "users", currentUserId);
+        await setDoc(userDocRef, { pseudo }, { merge: true });
+
+        // Sauvegarde locale pour référence rapide
+        localStorage.setItem('tcg_pseudo', pseudo);
+        entrerDansLobby(pseudo);
+      } catch (err) {
+        loginError.textContent = "Erreur : " + err.message;
+        console.error(err);
+      }
+    });
+
+    // ==========================================================
+    // ENTRÉE DANS LE LOBBY
+    // ==========================================================
+    function entrerDansLobby(pseudo) {
+      currentPseudo               = pseudo;
+      loginScreen.style.display   = 'none';
+      lobbyEl.style.display       = 'flex'; // flex pour les 3 colonnes
+      currentPseudoEl.textContent = pseudo;
+    }
+
+    // ==========================================================
+    // CHANGER DE PSEUDO
+    // ==========================================================
+    changePseudoBtn.addEventListener('click', () => {
+      pseudoInput.value          = currentPseudoEl.textContent;
+      loginError.textContent     = '';
+      lobbyEl.style.display      = 'none';
+      loginScreen.style.display  = 'flex';
+      pseudoInput.focus();
+    });
+
+    // ==========================================================
+    // CHAT — Envoyer un message
+    // ==========================================================
+    function envoyerMessage() {
+      const input = document.getElementById('chat-input');
+      const texte = input.value.trim();
+      if (!texte) return;
+
+      const now   = new Date();
+      const heure = `${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+      ajouterMessageDom({ auteur: currentPseudo, texte, heure, type: 'msg' });
+      input.value = '';
+    }
+
+    // Ajoute un message dans le DOM du chat
+    function ajouterMessageDom({ auteur, texte, heure, type }) {
+      const zone = document.getElementById('chat-messages');
+      const el   = document.createElement('div');
+
+      if (type === 'log') {
+        // Log système : rouge italique
+        el.className   = 'msg-log';
+        el.textContent = texte;
+      } else {
+        // Message joueur normal
+        el.className = 'msg';
+        el.innerHTML = `
+          <span class="msg-author">${auteur}</span>
+          ${texte}
+          <span class="msg-time">${heure}</span>
+        `;
+      }
+
+      zone.appendChild(el);
+
+      // Limite à 100 messages dans le DOM
+      const tous = zone.querySelectorAll('.msg, .msg-log');
+      if (tous.length > 100) tous[0].remove();
+
+      // Scroll automatique vers le bas
+      zone.scrollTop = zone.scrollHeight;
+    }
+
+    // Raccourci pour les logs système
+    function ajouterLog(texte) {
+      ajouterMessageDom({ texte, type: 'log' });
+    }
+
+    // Expose au HTML (nécessaire car on est dans un module ES6)
+    window.envoyerMessage = envoyerMessage;
+
+    // ==========================================================
+    // JOUEURS CONNECTÉS — Toggle panneau dépliable
+    // ==========================================================
+    window.toggleJoueurs = function() {
+      document.getElementById('players-panel').classList.toggle('open');
+    };
+
+    // ==========================================================
+    // PANNEAU LATÉRAL DROIT — Chargement dynamique via fetch()
+    // Le contenu HTML est chargé depuis un fichier externe,
+    // mis en cache après le premier chargement.
+    // ==========================================================
+    window.ouvrirPanel = async function(nom) {
+
+      // Re-clic sur le même onglet → fermer le panneau
+      if (panelOuvert === nom) {
+        fermerPanel();
+        return;
+      }
+
+      // Retire la classe active sur tous les boutons onglets
+      document.getElementById('btn-regles').classList.remove('active');
+      document.getElementById('btn-galerie').classList.remove('active');
+
+      // Active le bouton correspondant
+      document.getElementById(`btn-${nom}`).classList.add('active');
+
+      // Met à jour le titre du panneau
+      document.getElementById('right-panel-title').textContent = panneauTitres[nom];
+
+      const contenu = document.getElementById('right-panel-content');
+      // Injecte le contenu depuis le cache
+contenu.innerHTML = panneauCache[nom];
+
+// Ré-initialise la galerie si nécessaire (le DOM est recréé à chaque injection)
+if (nom === 'galerie') {
+  const { initGalerie } = await import('./galerie.js');
+  initGalerie();
+}
+
+      // Charge le fichier externe si pas encore en cache
+      if (!panneauCache[nom]) {
+        contenu.innerHTML = '<div style="padding:20px;color:var(--text-muted);">Chargement...</div>';
+
+        try {
+          const reponse = await fetch(panneauFichiers[nom]);
+          if (!reponse.ok) throw new Error(`Fichier introuvable (${reponse.status})`);
+
+          const html    = await reponse.text();
+          const parser  = new DOMParser();
+          const docExt  = parser.parseFromString(html, 'text/html');
+
+          // Injecte les styles du fichier externe dans <head> (une seule fois)
+          docExt.querySelectorAll('style').forEach(styleEl => {
+            if (!document.querySelector(`style[data-panneau="${nom}"]`)) {
+              const clone = document.createElement('style');
+              clone.setAttribute('data-panneau', nom); // marqueur anti-doublon
+              clone.textContent = styleEl.textContent;
+              document.head.appendChild(clone);
+            }
+          });
+
+          // Après avoir mis le HTML en cache et l'avoir injecté...
+panneauCache[nom] = docExt.body.innerHTML;
+contenu.innerHTML = panneauCache[nom]; // ← déjà présent plus bas, mais on en a besoin ici
+
+// Si c'est la galerie, on charge et initialise galerie.js       
+
+        } catch (err) {
+          // Affiche l'erreur dans le panneau mais l'ouvre quand même
+          contenu.innerHTML = `<div style="padding:20px;color:#e94560;">❌ Erreur : ${err.message}</div>`;
+          document.getElementById('right-panel').classList.add('open');
+          panelOuvert = nom;
+          return;
+        }
+      }
+
+      // Injecte le contenu depuis le cache
+      contenu.innerHTML = panneauCache[nom];
+
+      // Ouvre le panneau (animation CSS via la classe .open)
+      document.getElementById('right-panel').classList.add('open');
+      panelOuvert = nom;
+    };
+
+    // Ferme le panneau latéral
+    window.fermerPanel = function() {
+      document.getElementById('right-panel').classList.remove('open');
+      document.getElementById('btn-regles').classList.remove('active');
+      document.getElementById('btn-galerie').classList.remove('active');
+      panelOuvert = null;
+    };
+
+    // ==========================================================
+    // MODALS
+    // ==========================================================
+    window.ouvrirModalCreer = function() {
+      document.getElementById('modal-creer').classList.add('open');
+      // Réinitialise l'état de la modal
+      document.getElementById('code-display').style.display      = 'none';
+      document.getElementById('btn-creer-confirm').style.display = 'inline-block';
+      document.getElementById('btn-creer-confirm').disabled      = false;
+      document.getElementById('btn-creer-confirm').textContent   = 'Créer';
+    };
+
+    window.ouvrirModalRejoindre = function() {
+      document.getElementById('modal-rejoindre').classList.add('open');
+      document.getElementById('input-code-rejoindre').value = '';
+    };
+
+    window.fermerModal = function(id) {
+      document.getElementById(id).classList.remove('open');
+    };
+
+    // Ferme la modal en cliquant sur l'overlay (hors de la modale)
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) fermerModal(overlay.id);
+      });
+    });
+
+    // ==========================================================
+    // CRÉER UNE PARTIE (placeholder — Firebase viendra après)
+    // ==========================================================
+    window.creerPartie = function() {
+      // Génère un code aléatoire de 6 caractères (sans ambiguïtés O/0 I/1)
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = '';
+      for (let i = 0; i < 6; i++) {
+        code += chars[Math.floor(Math.random() * chars.length)];
+      }
+
+      // Affiche le code dans la modal
+      const codeDisplay = document.getElementById('code-display');
+      codeDisplay.textContent   = code;
+      codeDisplay.style.display = 'block';
+
+      // Désactive le bouton pour éviter de recréer une partie
+      const btn = document.getElementById('btn-creer-confirm');
+      btn.textContent = '⏳ En attente...';
+      btn.disabled    = true;
+
+      ajouterLog(`⚔️ ${currentPseudo} a créé une partie. [Code : ${code}]`);
+    };
+
+    // ==========================================================
+    // REJOINDRE UNE PARTIE (placeholder — Firebase viendra après)
+    // ==========================================================
+    window.rejoindrePartie = function() {
+      const code = document.getElementById('input-code-rejoindre').value.trim().toUpperCase();
+
+      if (code.length < 6) {
+        alert('Le code doit faire 6 caractères !');
+        return;
+      }
+
+      ajouterLog(`🚪 ${currentPseudo} a rejoint la partie [${code}].`);
+      fermerModal('modal-rejoindre');
+    };
+
+  </script>
+</body>
+</html>

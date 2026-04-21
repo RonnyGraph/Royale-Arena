@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Hub Admin - Royale Arena</title>
+  <style>
+    /* Style général de la page */
+    body {
+      font-family: Arial, sans-serif;
+      background: #1a1a2e;
+      color: white;
+      padding: 40px;
+      text-align: center;
+    }
+    h1 { color: #e94560; margin-bottom: 40px; }
+
+    /* Conteneur des boutons de navigation */
+    .menu {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    /* Style des boutons menant aux différents panels */
+    .menu a {
+      display: block;
+      padding: 20px;
+      background: #16213e;
+      color: white;
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 18px;
+      border: 2px solid #e94560;
+      transition: 0.2s;
+    }
+    .menu a:hover {
+      background: #e94560;
+      transform: scale(1.03);
+    }
+  </style>
+</head>
+<body>
+  <h1>⚙️ Panneau d'Administration</h1>
+
+  <!-- Menu principal avec liens vers chaque panel admin -->
+  <div class="menu">
+    <a href="admin-statuts.html">🌀 Gérer les Statuts</a>
+    <a href="admin-annexes.html">🧩 Gérer les Annexes (Invocations, Pièges, Objets...)</a>
+    <a href="admin.html">🃏 Gérer les Cartes</a>
+  </div>
+</body>
+</html>

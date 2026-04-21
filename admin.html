@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin - Cartes</title>
+  <style>
+    /* Thème identique aux autres pages admin */
+    body { font-family: Arial, sans-serif; background: #1a1a2e; color: white; padding: 20px; }
+    h1 { color: #e94560; }
+    a.back { color: #4cc9f0; text-decoration: none; }
+
+    /* Layout en 2 colonnes */
+    .container { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; }
+    .panel { background: #16213e; padding: 20px; border-radius: 10px; }
+
+    /* Champs */
+    label { display: block; margin-top: 10px; font-weight: bold; }
+    input, select, textarea {
+      width: 100%; padding: 8px; margin-top: 5px;
+      border-radius: 5px; border: none; font-size: 14px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 15px; padding: 10px 20px; background: #e94560;
+      color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 15px;
+    }
+    button:hover { background: #ff5f7a; }
+    button.secondary { background: #4cc9f0; color: #000; }
+    button.secondary:hover { background: #6fd8f5; }
+
+    #preview { max-width: 120px; margin-top: 10px; display: none; border-radius: 5px; }
+
+    /* Ligne PV/Def côte à côte */
+    .row { display: flex; gap: 10px; }
+    .row > div { flex: 1; }
+
+    /* Listes cochables (annexes / statuts / variantes) */
+    .checklist {
+      background: #0f3460; padding: 10px; border-radius: 5px;
+      margin-top: 5px; max-height: 180px; overflow-y: auto;
+    }
+    .check-item {
+      display: flex; align-items: center; gap: 10px; padding: 4px;
+    }
+    .check-item img { width: 30px; height: 30px; object-fit: contain; }
+    .check-item input[type="checkbox"] { width: auto; margin: 0; }
+    .check-item label { margin: 0; font-weight: normal; }
+
+    /* Bloc extensions : chaque extension = une ligne avec nom + pv + image + bouton supprimer */
+    #extensions { margin-top: 10px; }
+    .extension-item {
+      background: #0f3460; padding: 10px; border-radius: 5px;
+      margin-bottom: 10px; display: grid;
+      grid-template-columns: 2fr 1fr 2fr auto; gap: 8px; align-items: center;
+    }
+    .extension-item input { margin: 0; }
+    .extension-item button {
+      margin: 0; padding: 6px 10px; background: #c94a4a; font-size: 13px;
+    }
+
+    /* Checkbox "est une variante" */
+    .variante-toggle {
+      background: #0f3460; padding: 10px; border-radius: 5px;
+      margin-top: 10px; display: flex; align-items: center; gap: 10px;
+    }
+    .variante-toggle input { width: auto; margin: 0; }
+    .variante-toggle label { margin: 0; }
+
+    /* Liste des cartes existantes (panel droit) */
+    .carte-item {
+      display: flex; align-items: center; gap: 10px;
+      background: #0f3460; padding: 10px; border-radius: 5px; margin-bottom: 10px;
+    }
+    .carte-item img { width: 50px; height: 50px; object-fit: contain; }
+    .carte-item .infos { flex: 1; font-size: 13px; }
+    .carte-item button { background: #c94a4a; padding: 5px 10px; margin: 0; }
+    .badge {
+      display: inline-block; padding: 2px 6px; border-radius: 3px;
+      font-size: 11px; margin-left: 5px;
+    }
+    .badge-variante { background: #8a4fff; }
+    .badge-classe { background: #e94560; }
+
+    #msg { margin-top: 10px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <a href="admin-index.html" class="back">← Retour au hub</a>
+  <h1>🎴 Gérer les Cartes</h1>
+
+  <div class="container">
+    <!-- ===== PANEL GAUCHE : Formulaire ===== -->
+    <div class="panel">
+      <h2>Créer une carte</h2>
+      <form id="carteForm">
+        <label>Nom de la carte</label>
+        <input type="text" id="nom" required placeholder="ex: Gooper Blooper">
+
+        <label>Classe</label>
+        <select id="classe" required>
+          <option value="">-- Choisir une classe --</option>
+          <option value="Attaquant">Attaquant</option>
+          <option value="Défense">Défense</option>
+          <option value="Technique">Technique</option>
+          <option value="Puissance">Puissance</option>
+          <option value="Ruse">Ruse</option>
+          <option value="Explosif">Explosif</option>
+          <option value="Support">Support</option>
+        </select>
+
+        <label>Image de la carte (PNG)</label>
+        <input type="file" id="imageFile" accept="image/png" required>
+        <img id="preview" alt="Aperçu">
+
+        <!-- PV et Def côte à côte -->
+        <div class="row">
+          <div>
+            <label>PV</label>
+            <input type="number" id="pv" min="0" required>
+          </div>
+          <div>
+            <label>Def</label>
+            <input type="number" id="def" min="0" required>
+          </div>
+        </div>
+
+        <!-- ==== Extensions (items/parties du perso avec PV propres) ==== -->
+        <label>Extensions (jetons avec PV propres)</label>
+        <div id="extensions"></div>
+        <button type="button" class="secondary" id="addExtension">➕ Ajouter une extension</button>
+
+        <!-- ==== Annexes liées ==== -->
+        <label>Annexes associées</label>
+        <div id="annexesList" class="checklist">Chargement...</div>
+
+        <!-- ==== Statuts émis ==== -->
+        <label>Statuts émis par la carte</label>
+        <div id="statutsList" class="checklist">Chargement...</div>
+
+        <!-- ==== Checkbox : est une variante ? ==== -->
+        <div class="variante-toggle">
+          <input type="checkbox" id="isVariante">
+          <label for="isVariante">🔄 Cette carte est une variante (phase d'une autre carte)</label>
+        </div>
+
+        <!-- ==== Variantes liées (max 4) : masqué si isVariante est coché ==== -->
+        <div id="variantesBlock">
+          <label>Variantes liées (max 4) — ne s'affichent que les cartes marquées comme variantes</label>
+          <div id="variantesList" class="checklist">Chargement...</div>
+        </div>
+
+        <button type="submit">💾 Sauvegarder la carte</button>
+        <div id="msg"></div>
+      </form>
+    </div>
+
+    <!-- ===== PANEL DROITE : Liste des cartes ===== -->
+    <div class="panel">
+      <h2>Cartes existantes</h2>
+      <div id="liste">Chargement...</div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Import Firestore + config partagée
+    import { db } from './firebase-config.js';
+    import {
+      collection, addDoc, getDocs, deleteDoc, doc, query, orderBy
+    } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+    // Config Cloudinary (identique aux autres pages admin)
+    const CLOUDINARY_CLOUD_NAME = "dl6ovt1zq";
+    const CLOUDINARY_PRESET = "royale_arena";
+
+    // --- Aperçu image carte principale ---
+    document.getElementById('imageFile').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const preview = document.getElementById('preview');
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = 'block';
+      }
+    });
+
+    /**
+     * Upload générique vers Cloudinary (on passe le dossier en paramètre)
+     */
+    async function uploadToCloudinary(file, folder) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', CLOUDINARY_PRESET);
+      formData.append('folder', folder);
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+        { method: 'POST', body: formData }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || "Erreur upload Cloudinary");
+      return data.secure_url;
+    }
+
+    // ========== GESTION DES EXTENSIONS (ajout dynamique de blocs) ==========
+    const extensionsDiv = document.getElementById('extensions');
+    document.getElementById('addExtension').addEventListener('click', () => {
+      // Création d'un bloc extension : nom, PV, fichier image, bouton supprimer
+      const div = document.createElement('div');
+      div.className = 'extension-item';
+      div.innerHTML = `
+        <input type="text" class="ext-nom" placeholder="Nom extension" required>
+        <input type="number" class="ext-pv" placeholder="PV" min="0" required>
+        <input type="file" class="ext-img" accept="image/png" required>
+        <button type="button">🗑️</button>
+      `;
+      // Bouton supprimer : retire juste le bloc du DOM
+      div.querySelector('button').addEventListener('click', () => div.remove());
+      extensionsDiv.appendChild(div);
+    });
+
+    // ========== CHARGEMENT DES CHECKLISTS (annexes / statuts / variantes) ==========
+
+    /**
+     * Charge une collection Firestore et remplit une checklist (checkboxes)
+     * @param {string} collectionName - nom de la collection Firestore
+     * @param {string} containerId - id du div conteneur
+     * @param {function} filterFn - fonction optionnelle pour filtrer les docs
+     */
+    async function chargerChecklist(collectionName, containerId, filterFn = null) {
+      const container = document.getElementById(containerId);
+      try {
+        const snap = await getDocs(collection(db, collectionName));
+        if (snap.empty) {
+          container.innerHTML = `<em>Aucun élément dans "${collectionName}".</em>`;
+          return;
+        }
+        container.innerHTML = "";
+        snap.forEach(docSnap => {
+          const data = docSnap.data();
+          // Si un filtre est fourni (ex: ne garder que les variantes), on skippe
+          if (filterFn && !filterFn(data)) return;
+          const div = document.createElement('div');
+          div.className = 'check-item';
+          div.innerHTML = `
+            <input type="checkbox" id="${containerId}_${docSnap.id}" value="${docSnap.id}">
+            <img src="${data.imageUrl}" alt="${data.nom}">
+            <label for="${containerId}_${docSnap.id}">${data.nom}</label>
+          `;
+          container.appendChild(div);
+        });
+        // Si le filtre a tout enlevé
+        if (container.children.length === 0) {
+          container.innerHTML = `<em>Aucun élément correspondant.</em>`;
+        }
+      } catch (err) {
+        container.innerHTML = `<span style="color:#f88;">Erreur : ${err.message}</span>`;
+      }
+    }
+
+    // ========== LIMITATION À 4 VARIANTES MAX ==========
+    document.getElementById('variantesList').addEventListener('change', (e) => {
+      if (e.target.type !== 'checkbox') return;
+      const checked = document.querySelectorAll('#variantesList input[type=checkbox]:checked');
+      // Si on dépasse 4, on décoche la dernière cochée
+      if (checked.length > 4) {
+        e.target.checked = false;
+        alert("Maximum 4 variantes par carte !");
+      }
+    });
+
+    // ========== TOGGLE "est une variante" → masque le bloc variantes ==========
+    document.getElementById('isVariante').addEventListener('change', (e) => {
+      const block = document.getElementById('variantesBlock');
+      // Une variante ne peut pas avoir elle-même de variantes
+      if (e.target.checked) {
+        block.style.display = 'none';
+        // On décoche tout au passage pour éviter d'envoyer des données fantômes
+        document.querySelectorAll('#variantesList input[type=checkbox]').forEach(cb => cb.checked = false);
+      } else {
+        block.style.display = 'block';
+      }
+    });
+
+    // ========== LISTE DES CARTES EXISTANTES (panel droit) ==========
+    async function chargerCartes() {
+      const liste = document.getElementById('liste');
+      liste.innerHTML = "Chargement...";
+      const q = query(collection(db, "cartes"), orderBy("createdAt", "desc"));
+      const snapshot = await getDocs(q);
+      if (snapshot.empty) {
+        liste.innerHTML = "<p><i>Aucune carte pour l'instant.</i></p>";
+        return;
+      }
+      liste.innerHTML = "";
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const div = document.createElement('div');
+        div.className = 'carte-item';
+        // Badges pour identifier rapidement classe et si c'est une variante
+        const varianteBadge = data.isVariante ? `<span class="badge badge-variante">VARIANTE</span>` : '';
+        div.innerHTML = `
+          <img src="${data.imageUrl}" alt="${data.nom}">
+          <div class="infos">
+            <strong>${data.nom}</strong>
+            <span class="badge badge-classe">${data.classe}</span>
+            ${varianteBadge}
+            <br>
+            <small>PV: ${data.pv} | Def: ${data.def} | Extensions: ${data.extensions?.length || 0}</small>
+          </div>
+          <button data-id="${docSnap.id}">🗑️</button>
+        `;
+        div.querySelector('button').addEventListener('click', async () => {
+          if (confirm(`Supprimer "${data.nom}" ?`)) {
+            await deleteDoc(doc(db, "cartes", docSnap.id));
+            chargerCartes();
+            // On recharge aussi les variantes (car la carte supprimée pouvait être une variante liable)
+            chargerChecklist("cartes", "variantesList", (d) => d.isVariante === true);
+          }
+        });
+        liste.appendChild(div);
+      });
+    }
+
+    // ========== SOUMISSION DU FORMULAIRE ==========
+    document.getElementById('carteForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('msg');
+      msg.style.color = '#ffd700';
+      msg.textContent = "⏳ Upload en cours...";
+
+      try {
+        // 1. Récupération des valeurs simples
+        const nom = document.getElementById('nom').value.trim();
+        const classe = document.getElementById('classe').value;
+        const pv = parseInt(document.getElementById('pv').value, 10);
+        const def = parseInt(document.getElementById('def').value, 10);
+        const file = document.getElementById('imageFile').files[0];
+        const isVariante = document.getElementById('isVariante').checked;
+
+        // 2. Upload image principale de la carte
+        const imageUrl = await uploadToCloudinary(file, 'cartes');
+
+        // 3. Traitement des extensions : pour chaque bloc, on upload l'image et on construit l'objet
+        const extensionsBlocks = document.querySelectorAll('.extension-item');
+        const extensions = [];
+        for (const block of extensionsBlocks) {
+          const extNom = block.querySelector('.ext-nom').value.trim();
+          const extPv = parseInt(block.querySelector('.ext-pv').value, 10);
+          const extFile = block.querySelector('.ext-img').files[0];
+          // Upload de l'image de l'extension dans un sous-dossier dédié
+          const extImageUrl = await uploadToCloudinary(extFile, 'extensions');
+          extensions.push({ nom: extNom, pv: extPv, imageUrl: extImageUrl });
+        }
+
+        // 4. Récupération des IDs cochés (annexes, statuts, variantes)
+        const annexes = Array.from(
+          document.querySelectorAll('#annexesList input[type=checkbox]:checked')
+        ).map(cb => cb.value);
+        const statuts = Array.from(
+          document.querySelectorAll('#statutsList input[type=checkbox]:checked')
+        ).map(cb => cb.value);
+        // Les variantes ne sont collectées que si la carte n'est PAS elle-même une variante
+        const variantes = isVariante ? [] : Array.from(
+          document.querySelectorAll('#variantesList input[type=checkbox]:checked')
+        ).map(cb => cb.value);
+
+        // 5. Construction de l'objet carte complet
+        const carte = {
+          nom, classe, pv, def, imageUrl,
+          extensions,   // tableau [{nom, pv, imageUrl}, ...]
+          annexes,      // tableau d'IDs vers collection "annexes"
+          statuts,      // tableau d'IDs vers collection "statuts"
+          isVariante,   // booléen : true si c'est une phase d'une autre carte
+          variantes,    // tableau d'IDs vers d'autres cartes marquées isVariante
+          createdAt: new Date()
+        };
+
+        // 6. Sauvegarde dans Firestore
+        await addDoc(collection(db, "cartes"), carte);
+
+        // 7. Feedback + reset
+        msg.style.color = '#4cff72';
+        msg.textContent = `✅ Carte "${nom}" sauvegardée !`;
+        document.getElementById('carteForm').reset();
+        document.getElementById('preview').style.display = 'none';
+        extensionsDiv.innerHTML = ''; // on vide les blocs extensions
+        document.getElementById('variantesBlock').style.display = 'block';
+        // Décochage manuel des checkboxes (reset ne les gère pas car créées dynamiquement)
+        document.querySelectorAll('.checklist input[type=checkbox]').forEach(cb => cb.checked = false);
+
+        // Refresh des listes
+        chargerCartes();
+        // Recharger la liste des variantes cochables (la nouvelle carte peut en être une)
+        chargerChecklist("cartes", "variantesList", (d) => d.isVariante === true);
+      } catch (err) {
+        msg.style.color = '#ff4c4c';
+        msg.textContent = "❌ Erreur : " + err.message;
+        console.error(err);
+      }
+    });
+
+    // ========== CHARGEMENTS INITIAUX ==========
+    chargerChecklist("annexes", "annexesList");                              // toutes les annexes
+    chargerChecklist("statuts", "statutsList");                              // tous les statuts
+    chargerChecklist("cartes", "variantesList", (d) => d.isVariante === true); // seulement les cartes variantes
+    chargerCartes();                                                          // liste du panel droit
+  </script>
+</body>
+</html>

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin - Annexes</title>
+  <style>
+    /* Thème identique à admin-statuts pour cohérence visuelle */
+    body { font-family: Arial, sans-serif; background: #1a1a2e; color: white; padding: 20px; }
+    h1 { color: #e94560; }
+    a.back { color: #4cc9f0; text-decoration: none; }
+
+    /* Layout en 2 colonnes : formulaire à gauche, liste à droite */
+    .container { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; }
+    .panel { background: #16213e; padding: 20px; border-radius: 10px; }
+
+    /* Champs du formulaire */
+    label { display: block; margin-top: 10px; font-weight: bold; }
+    input, select, textarea {
+      width: 100%; padding: 8px; margin-top: 5px;
+      border-radius: 5px; border: none; font-size: 14px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 15px; padding: 10px 20px; background: #e94560;
+      color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 15px;
+    }
+    button:hover { background: #ff5f7a; }
+
+    /* Aperçu image */
+    #preview { max-width: 100px; margin-top: 10px; display: none; border-radius: 5px; }
+
+    /* Ligne PV/Def côte à côte */
+    .row { display: flex; gap: 10px; }
+    .row > div { flex: 1; }
+
+    /* Liste des statuts cochables dans le formulaire */
+    .statuts-list {
+      background: #0f3460; padding: 10px; border-radius: 5px;
+      margin-top: 5px; max-height: 200px; overflow-y: auto;
+    }
+    .statut-check { display: flex; align-items: center; gap: 10px; padding: 4px; }
+    .statut-check img { width: 30px; height: 30px; object-fit: contain; }
+    .statut-check input[type="checkbox"] { width: auto; margin: 0; }
+    .statut-check label { margin: 0; font-weight: normal; }
+
+    /* Cartes d'annexes dans la liste de droite */
+    .annexe-item {
+      display: flex; align-items: center; gap: 10px;
+      background: #0f3460; padding: 10px; border-radius: 5px; margin-bottom: 10px;
+    }
+    .annexe-item img { width: 50px; height: 50px; object-fit: contain; }
+    .annexe-item .infos { flex: 1; font-size: 13px; }
+    .annexe-item button { background: #c94a4a; padding: 5px 10px; margin: 0; }
+
+    #msg { margin-top: 10px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <a href="admin-index.html" class="back">← Retour au hub</a>
+  <h1>🧩 Gérer les Annexes</h1>
+
+  <div class="container">
+    <!-- ===== PANEL GAUCHE : Formulaire de création ===== -->
+    <div class="panel">
+      <h2>Créer une annexe</h2>
+      <form id="annexeForm">
+        <!-- Nom de l'annexe (invocation, objet, trap, etc.) -->
+        <label>Nom</label>
+        <input type="text" id="nom" required placeholder="ex: Doom Bloom">
+
+        <!-- Type d'annexe parmi les 6 catégories définies dans les règles -->
+        <label>Type</label>
+        <select id="type" required>
+          <option value="">-- Choisir un type --</option>
+          <option value="Invocation">Invocation</option>
+          <option value="Objet">Objet</option>
+          <option value="Trap">Trap</option>
+          <option value="Non catégorisé">Non catégorisé</option>
+          <option value="Clone">Clone</option>
+          <option value="Combattant additionnel">Combattant additionnel</option>
+        </select>
+
+        <!-- Image (uploadée sur Cloudinary dans le dossier "annexes") -->
+        <label>Image (PNG)</label>
+        <input type="file" id="imageFile" accept="image/png" required>
+        <img id="preview" alt="Aperçu">
+
+        <!-- PV / Def optionnels (certaines annexes n'en ont pas) -->
+        <div class="row">
+          <div>
+            <label>PV (optionnel)</label>
+            <input type="number" id="pv" min="0" placeholder="Vide si aucun">
+          </div>
+          <div>
+            <label>Def (optionnel)</label>
+            <input type="number" id="def" min="0" placeholder="Vide si aucun">
+          </div>
+        </div>
+
+        <!-- Liste dynamique des statuts associables -->
+        <label>Statuts associés (cocher ceux émis par cette annexe)</label>
+        <div id="statutsList" class="statuts-list">Chargement...</div>
+
+        <button type="submit">💾 Sauvegarder</button>
+        <div id="msg"></div>
+      </form>
+    </div>
+
+    <!-- ===== PANEL DROITE : Liste des annexes existantes ===== -->
+    <div class="panel">
+      <h2>Annexes existantes</h2>
+      <div id="liste">Chargement...</div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Import de Firestore via la config partagée (même que admin-statuts)
+    import { db } from './firebase-config.js';
+    import {
+      collection, addDoc, getDocs, deleteDoc, doc, query, orderBy
+    } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+    // --- Configuration Cloudinary (identique à admin-statuts) ---
+    const CLOUDINARY_CLOUD_NAME = "dl6ovt1zq";
+    const CLOUDINARY_PRESET = "royale_arena";
+
+    // --- Aperçu de l'image avant upload ---
+    document.getElementById('imageFile').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const preview = document.getElementById('preview');
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = 'block';
+      }
+    });
+
+    /**
+     * Upload une image vers Cloudinary dans le dossier "annexes"
+     * et retourne l'URL HTTPS publique.
+     */
+    async function uploadToCloudinary(file) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', CLOUDINARY_PRESET);
+      formData.append('folder', 'annexes'); // rangement dédié
+
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+        { method: 'POST', body: formData }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || "Erreur upload Cloudinary");
+      return data.secure_url;
+    }
+
+    /**
+     * Charge tous les statuts depuis Firestore et les affiche
+     * sous forme de checkboxes dans le formulaire.
+     * Les IDs de statuts cochés seront stockés dans l'annexe.
+     */
+    async function chargerStatutsCochables() {
+      const statutsList = document.getElementById("statutsList");
+      try {
+        const snap = await getDocs(collection(db, "statuts"));
+        if (snap.empty) {
+          statutsList.innerHTML = "<em>Aucun statut créé pour le moment.</em>";
+          return;
+        }
+        statutsList.innerHTML = "";
+        // Une checkbox par statut, avec son icône et son nom
+        snap.forEach(docSnap => {
+          const s = docSnap.data();
+          const div = document.createElement("div");
+          div.className = "statut-check";
+          div.innerHTML = `
+            <input type="checkbox" id="st_${docSnap.id}" value="${docSnap.id}">
+            <img src="${s.imageUrl}" alt="${s.nom}">
+            <label for="st_${docSnap.id}">${s.nom}</label>
+          `;
+          statutsList.appendChild(div);
+        });
+      } catch (err) {
+        statutsList.innerHTML = `<span style="color:#f88;">Erreur : ${err.message}</span>`;
+      }
+    }
+
+    /**
+     * Charge et affiche toutes les annexes existantes (panel droit).
+     * Permet aussi leur suppression.
+     */
+    async function chargerAnnexes() {
+      const liste = document.getElementById('liste');
+      liste.innerHTML = "Chargement...";
+
+      const q = query(collection(db, "annexes"), orderBy("createdAt", "desc"));
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        liste.innerHTML = "<p><i>Aucune annexe pour l'instant.</i></p>";
+        return;
+      }
+
+      liste.innerHTML = "";
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        // Affichage conditionnel des PV/Def (puisqu'optionnels)
+        const stats = [
+          data.pv !== undefined ? `PV: ${data.pv}` : null,
+          data.def !== undefined ? `Def: ${data.def}` : null
+        ].filter(Boolean).join(' | ');
+
+        const nbStatuts = (data.statuts || []).length;
+
+        const div = document.createElement('div');
+        div.className = 'annexe-item';
+        div.innerHTML = `
+          <img src="${data.imageUrl}" alt="${data.nom}">
+          <div class="infos">
+            <strong>${data.nom}</strong> <em>(${data.type})</em><br>
+            <small>${stats || '—'}</small><br>
+            <small>🌀 ${nbStatuts} statut(s) associé(s)</small>
+          </div>
+          <button data-id="${docSnap.id}">🗑️</button>
+        `;
+        // Suppression : retire juste le document Firestore
+        div.querySelector('button').addEventListener('click', async () => {
+          if (confirm(`Supprimer "${data.nom}" ?`)) {
+            await deleteDoc(doc(db, "annexes", docSnap.id));
+            chargerAnnexes();
+          }
+        });
+        liste.appendChild(div);
+      });
+    }
+
+    // --- Soumission du formulaire ---
+    document.getElementById('annexeForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('msg');
+      msg.style.color = '#ffd700';
+      msg.textContent = "⏳ Upload en cours...";
+
+      try {
+        // 1. Récupération des valeurs du formulaire
+        const nom = document.getElementById('nom').value.trim();
+        const type = document.getElementById('type').value;
+        const file = document.getElementById('imageFile').files[0];
+        const pvVal = document.getElementById('pv').value;
+        const defVal = document.getElementById('def').value;
+
+        // 2. IDs des statuts cochés → stockés en référence (pas les noms)
+        const statutsIds = Array.from(
+          document.querySelectorAll("#statutsList input[type=checkbox]:checked")
+        ).map(cb => cb.value);
+
+        // 3. Upload de l'image vers Cloudinary
+        const imageUrl = await uploadToCloudinary(file);
+
+        // 4. Construction du document (PV/Def omis si vides = plus propre que null)
+        const annexe = {
+          nom,
+          type,
+          imageUrl,
+          statuts: statutsIds,
+          createdAt: new Date()
+        };
+        if (pvVal !== "") annexe.pv = parseInt(pvVal, 10);
+        if (defVal !== "") annexe.def = parseInt(defVal, 10);
+
+        // 5. Enregistrement dans la collection "annexes"
+        await addDoc(collection(db, "annexes"), annexe);
+
+        // Feedback + reset du formulaire
+        msg.style.color = '#4cff72';
+        msg.textContent = `✅ Annexe "${nom}" sauvegardée !`;
+        document.getElementById('annexeForm').reset();
+        document.getElementById('preview').style.display = 'none';
+        // Le reset ne décoche pas les checkboxes ajoutées dynamiquement → on le fait à la main
+        document.querySelectorAll("#statutsList input[type=checkbox]").forEach(cb => cb.checked = false);
+
+        // Refresh de la liste
+        chargerAnnexes();
+      } catch (err) {
+        msg.style.color = '#ff4c4c';
+        msg.textContent = "❌ Erreur : " + err.message;
+        console.error(err);
+      }
+    });
+
+    // --- Chargement initial ---
+    chargerStatutsCochables(); // pour le formulaire
+    chargerAnnexes();          // pour la liste de droite
+  </script>
+</body>
+</html>

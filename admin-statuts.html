@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin - Statuts</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #1a1a2e; color: white; padding: 20px; }
+    h1 { color: #e94560; }
+    a.back { color: #4cc9f0; text-decoration: none; }
+
+    /* Layout en 2 colonnes : formulaire à gauche, liste à droite */
+    .container { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; }
+
+    .panel { background: #16213e; padding: 20px; border-radius: 10px; }
+
+    /* Styles des champs du formulaire */
+    label { display: block; margin-top: 10px; font-weight: bold; }
+    input, textarea {
+      width: 100%; padding: 8px; margin-top: 5px;
+      border-radius: 5px; border: none; font-size: 14px;
+    }
+    button {
+      margin-top: 15px; padding: 10px 20px; background: #e94560;
+      color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 15px;
+    }
+    button:hover { background: #ff5f7a; }
+
+    /* Aperçu de l'image sélectionnée */
+    #preview { max-width: 100px; margin-top: 10px; display: none; border-radius: 5px; }
+
+    /* Chaque carte de statut dans la liste de droite */
+    .statut-item {
+      display: flex; align-items: center; gap: 10px;
+      background: #0f3460; padding: 10px; border-radius: 5px; margin-bottom: 10px;
+    }
+    .statut-item img { width: 40px; height: 40px; object-fit: contain; }
+    .statut-item .infos { flex: 1; }
+    .statut-item button { background: #c94a4a; padding: 5px 10px; margin: 0; }
+
+    #msg { margin-top: 10px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <a href="admin-index.html" class="back">← Retour au hub</a>
+  <h1>🌀 Gérer les Statuts</h1>
+
+  <div class="container">
+    <!-- ===== PANEL GAUCHE : Formulaire de création ===== -->
+    <div class="panel">
+      <h2>Créer un statut</h2>
+      <form id="statutForm">
+        <label>Nom du statut</label>
+        <input type="text" id="nom" required placeholder="ex: Brûlure">
+
+        <label>Description / Info</label>
+        <textarea id="info" required placeholder="ex: réduit la DEF de 5"></textarea>
+
+        <label>Image (PNG)</label>
+        <input type="file" id="imageFile" accept="image/png" required>
+        <img id="preview" alt="Aperçu">
+
+        <button type="submit">💾 Sauvegarder</button>
+        <div id="msg"></div>
+      </form>
+    </div>
+
+    <!-- ===== PANEL DROITE : Liste des statuts existants ===== -->
+    <div class="panel">
+      <h2>Statuts existants</h2>
+      <div id="liste">Chargement...</div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Import de Firestore (on n'utilise PLUS Firebase Storage)
+    import { db } from './firebase-config.js';
+    import {
+      collection, addDoc, getDocs, deleteDoc, doc, query, orderBy
+    } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+    // --- Configuration Cloudinary ---
+    const CLOUDINARY_CLOUD_NAME = "dl6ovt1zq";
+    const CLOUDINARY_PRESET = "royale_arena";
+
+    // --- Aperçu de l'image avant upload ---
+    document.getElementById('imageFile').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const preview = document.getElementById('preview');
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = 'block';
+      }
+    });
+
+    /**
+     * Upload une image vers Cloudinary et retourne l'URL publique
+     * On utilise l'API REST de Cloudinary avec le preset "unsigned"
+     */
+    async function uploadToCloudinary(file) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', CLOUDINARY_PRESET);
+      formData.append('folder', 'statuts'); // range les images dans un dossier "statuts"
+
+      // Appel de l'API Cloudinary
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+        { method: 'POST', body: formData }
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || "Erreur upload Cloudinary");
+      return data.secure_url; // URL HTTPS de l'image uploadée
+    }
+
+    /**
+     * Charge et affiche tous les statuts existants depuis Firestore
+     */
+    async function chargerStatuts() {
+      const liste = document.getElementById('liste');
+      liste.innerHTML = "Chargement...";
+
+      // Récupération triée par date de création
+      const q = query(collection(db, "statuts"), orderBy("createdAt", "desc"));
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        liste.innerHTML = "<p><i>Aucun statut pour l'instant.</i></p>";
+        return;
+      }
+
+      // Génération du HTML pour chaque statut
+      liste.innerHTML = "";
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const div = document.createElement('div');
+        div.className = 'statut-item';
+        div.innerHTML = `
+          <img src="${data.imageUrl}" alt="${data.nom}">
+          <div class="infos">
+            <strong>${data.nom}</strong><br>
+            <small>${data.info}</small>
+          </div>
+          <button data-id="${docSnap.id}">🗑️</button>
+        `;
+        // Bouton supprimer : retire juste le document Firestore
+        // (l'image reste sur Cloudinary, on pourra faire un nettoyage plus tard)
+        div.querySelector('button').addEventListener('click', async () => {
+          if (confirm(`Supprimer "${data.nom}" ?`)) {
+            await deleteDoc(doc(db, "statuts", docSnap.id));
+            chargerStatuts(); // refresh de la liste
+          }
+        });
+        liste.appendChild(div);
+      });
+    }
+
+    // --- Soumission du formulaire ---
+    document.getElementById('statutForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('msg');
+      msg.style.color = '#ffd700';
+      msg.textContent = "⏳ Upload en cours...";
+
+      try {
+        const nom = document.getElementById('nom').value.trim();
+        const info = document.getElementById('info').value.trim();
+        const file = document.getElementById('imageFile').files[0];
+
+        // 1. Upload de l'image sur Cloudinary → on récupère une URL
+        const imageUrl = await uploadToCloudinary(file);
+
+        // 2. Enregistrement des données (dont l'URL) dans Firestore
+        await addDoc(collection(db, "statuts"), {
+          nom: nom,
+          info: info,
+          imageUrl: imageUrl,
+          createdAt: new Date()
+        });
+
+        // Feedback + reset
+        msg.style.color = '#4cff72';
+        msg.textContent = "✅ Statut sauvegardé !";
+        document.getElementById('statutForm').reset();
+        document.getElementById('preview').style.display = 'none';
+
+        // Rafraîchir la liste
+        chargerStatuts();
+      } catch (err) {
+        msg.style.color = '#ff4c4c';
+        msg.textContent = "❌ Erreur : " + err.message;
+        console.error(err);
+      }
+    });
+
+    // Chargement initial
+    chargerStatuts();
+  </script>
+</body>
+</html>

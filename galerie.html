@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    /* === Styles du panneau galerie === */
+    .galerie-container {
+      padding: 10px;
+      font-family: Arial, sans-serif;
+      color: white;
+    }
+
+    /* Barre de recherche */
+    .galerie-search {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #2a2a4a;
+      background: #0f3460;
+      color: white;
+      font-size: 0.9em;
+      margin-bottom: 14px;
+      box-sizing: border-box;
+    }
+
+    .galerie-search::placeholder { color: #7070a0; }
+
+    /* Filtres par classe */
+    .galerie-filtres {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .filtre-btn {
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid #2a2a4a;
+      background: #16213e;
+      color: #ccccee;
+      cursor: pointer;
+      font-size: 0.8em;
+      transition: 0.2s;
+    }
+
+    .filtre-btn:hover,
+    .filtre-btn.actif {
+      background: #e94560;
+      border-color: #e94560;
+      color: white;
+    }
+
+    /* Grille des cartes */
+    .galerie-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 12px;
+    }
+
+    /* Carte individuelle */
+    .carte-item {
+      background: #16213e;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      border: 1px solid #2a2a4a;
+      transition: 0.2s;
+      text-align: center;
+    }
+
+    .carte-item:hover {
+      border-color: #e94560;
+      transform: translateY(-2px);
+    }
+
+    .carte-item img {
+      width: 100%;
+      aspect-ratio: 3/4;
+      object-fit: cover;
+      display: block;
+    }
+
+    .carte-item .carte-nom {
+      padding: 6px 4px;
+      font-size: 0.75em;
+      color: #ccccee;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .carte-item .carte-classe {
+      font-size: 0.7em;
+      color: #7070a0;
+      padding-bottom: 6px;
+    }
+
+    /* Message vide */
+    .galerie-vide {
+      text-align: center;
+      color: #7070a0;
+      padding: 30px 0;
+      font-size: 0.9em;
+    }
+
+    /* Loader */
+    .galerie-loader {
+      text-align: center;
+      padding: 30px;
+      color: #7070a0;
+    }
+
+    /* === Modal détail carte === */
+    .carte-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .carte-modal-overlay.visible { display: flex; }
+
+    .carte-modal {
+      background: #16213e;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 520px;
+      width: 90%;
+      max-height: 85vh;
+      overflow-y: auto;
+      border: 1px solid #2a2a4a;
+      position: relative;
+    }
+
+    .carte-modal-close {
+      position: absolute;
+      top: 12px; right: 16px;
+      background: none;
+      border: none;
+      color: #7070a0;
+      font-size: 1.4rem;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .carte-modal-close:hover { color: #e94560; }
+
+    .carte-modal-header {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .carte-modal-header img {
+      width: 120px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    .carte-modal-infos h2 {
+      font-size: 1.1em;
+      color: #ff5f7a;
+      margin-bottom: 6px;
+    }
+
+    .carte-modal-infos p {
+      font-size: 0.82em;
+      color: #9090b0;
+      margin: 3px 0;
+    }
+
+    .carte-modal-infos b { color: #ccccee; }
+
+    .carte-modal-body h3 {
+      font-size: 0.88em;
+      color: #4cc9f0;
+      margin: 14px 0 6px;
+      border-bottom: 1px solid #2a2a4a;
+      padding-bottom: 4px;
+    }
+
+    /* Annexes */
+    .ext-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .ext-item {
+      background: #0f3460;
+      border-radius: 6px;
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8em;
+    }
+
+    /* Annexes — image agrandie et cliquable */
+.ext-item {
+  background: #0f3460;
+  border-radius: 6px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8em;
+}
+
+/* ⬇️ Remplace l'ancien .ext-item img { width: 28px... } par ça */
+.annexe-img {
+  width: 110px;        /* Taille agrandie */
+  height: auto;
+  object-fit: contain;
+  border-radius: 6px;
+  cursor: pointer;     /* Indique que c'est cliquable */
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.annexe-img:hover {
+  transform: scale(1.05); /* Légère animation au survol */
+}
+
+/* ── Overlay zoom plein écran ── */
+#zoom-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;                         /* Couvre tout l'écran */
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+}
+
+#zoom-overlay.visible {
+  display: flex;                    /* Visible quand classe ajoutée */
+}
+
+.zoom-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.zoom-container img {
+  max-width: 90vw;
+  max-height: 85vh;    /* Garde de la marge en hauteur */
+  border-radius: 10px;
+  box-shadow: 0 0 30px rgba(0,0,0,0.8);
+}
+
+.zoom-container p {
+  color: white;
+  font-size: 1.1em;
+  font-weight: bold;
+}
+
+
+    /* Statuts */
+    .statuts-list-modal {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .statut-badge {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: #0f3460;
+      border-radius: 20px;
+      padding: 3px 8px;
+      font-size: 0.75em;
+    }
+
+    .statut-badge img {
+      width: 18px;
+      height: 18px;
+      object-fit: contain;
+    }
+
+    /* Variantes */
+    .variantes-list {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .variante-thumb {
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .variante-thumb img {
+      width: 60px;
+      border-radius: 6px;
+      border: 1px solid #2a2a4a;
+      transition: 0.2s;
+    }
+
+    .variante-thumb:hover img { border-color: #e94560; }
+
+    .variante-thumb p {
+      font-size: 0.7em;
+      color: #7070a0;
+      margin-top: 3px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ======================================
+       CONTENU GALERIE
+  ====================================== -->
+  <div class="galerie-container">
+
+    <!-- Barre de recherche -->
+    <input
+      type="text"
+      class="galerie-search"
+      id="galerie-search"
+      placeholder="🔍 Rechercher une carte..."
+      oninput="galerieRecherche(this.value)"
+    />
+
+    <!-- Boutons de filtre par classe -->
+    <div class="galerie-filtres" id="galerie-filtres">
+      <button class="filtre-btn actif" onclick="galerieFiltrer('')">Toutes</button>
+      <button class="filtre-btn" onclick="galerieFiltrer('Support')">Support</button>
+      <button class="filtre-btn" onclick="galerieFiltrer('Puissance')">Puissance</button>
+      <button class="filtre-btn" onclick="galerieFiltrer('Ruse')">Ruse</button>
+      <button class="filtre-btn" onclick="galerieFiltrer('Explosif')">Explosif</button>
+      <button class="filtre-btn" onclick="galerieFiltrer('Technique')">Technique</button>
+      <button class="filtre-btn" onclick="galerieFiltrer('Défense')">Défense</button>
+      <button class="filtre-btn" onclick="galerieFiltrer('Attaquant')">Attaquant</button>
+    </div>
+
+    <!-- Zone d'affichage (loader puis grille) -->
+    <div id="galerie-contenu">
+      <div class="galerie-loader">⏳ Chargement des cartes...</div>
+    </div>
+
+  </div>
+
+  <!-- === Modal détail d'une carte === -->
+  <div class="carte-modal-overlay" id="carte-modal-overlay" onclick="fermerCarteModal(event)">
+    <div class="carte-modal" id="carte-modal">
+      <button class="carte-modal-close" onclick="fermerCarteModal()">✕</button>
+      <div class="carte-modal-header">
+        <img id="modal-img" src="" alt="carte">
+        <div class="carte-modal-infos">
+          <h2 id="modal-nom"></h2>
+          <p>Classe : <b id="modal-classe"></b></p>
+          <p>PV : <b id="modal-pv"></b></p>
+          <p>DEF : <b id="modal-def"></b></p>
+          <p>Vitesse : <b id="modal-vitesse"></b></p>
+        </div>
+      </div>
+      <div class="carte-modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+</body>
+</html>

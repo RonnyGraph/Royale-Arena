@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    /* === Styles du panneau règles (injecté dans le panneau du lobby) === */
+    .regles-container {
+      padding: 10px;
+      font-family: Arial, sans-serif;
+      color: white;
+      line-height: 1.6;
+    }
+
+    .regles-container h2 {
+      color: #e94560;
+      border-bottom: 1px solid #e94560;
+      padding-bottom: 6px;
+      margin: 20px 0 10px;
+      font-size: 1.1em;
+    }
+
+    .regles-container h3 {
+      color: #4cc9f0;
+      margin: 14px 0 6px;
+      font-size: 1em;
+    }
+
+    .regles-container p,
+    .regles-container li {
+      font-size: 0.9em;
+      color: #ccccee;
+      margin-bottom: 6px;
+    }
+
+    .regles-container ul {
+      padding-left: 18px;
+    }
+
+    .regles-container .warning {
+      background: #3a1a1a;
+      border-left: 3px solid #e94560;
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin: 8px 0;
+      font-size: 0.85em;
+      color: #ffaaaa;
+    }
+
+    .regles-container .note {
+      background: #1a2a3a;
+      border-left: 3px solid #4cc9f0;
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin: 8px 0;
+      font-size: 0.85em;
+      color: #aaddff;
+    }
+
+    /* Tableau des statuts */
+    .statuts-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 0.85em;
+    }
+
+    .statuts-table th {
+      background: #16213e;
+      color: #4cc9f0;
+      padding: 6px 10px;
+      text-align: left;
+    }
+
+    .statuts-table td {
+      padding: 5px 10px;
+      border-bottom: 1px solid #2a2a4a;
+      color: #ccccee;
+      vertical-align: top;
+    }
+
+    .statuts-table tr:hover td {
+      background: #1a1a3a;
+    }
+  </style>
+</head>
+<body>
+<div class="regles-container">
+
+  <!-- ========== SECTION 1 ========== -->
+  <h2>🎯 1. Objectif du jeu</h2>
+  <p>Chaque joueur constitue une équipe de <b>3 Boss</b> issus de l'univers Mario.</p>
+  <p>La partie se termine dès que toutes les cartes d'un joueur sont mises <b>KO</b>.</p>
+
+  <!-- ========== SECTION 2 ========== -->
+  <h2>⚙️ 2. Mise en place</h2>
+
+  <h3>2.1 Construction d'équipe</h3>
+  <p>Chaque joueur choisit <b>3 cartes</b> pour former son équipe.</p>
+  <p>Leur ordre est défini avant la partie — il détermine leur emplacement sur le terrain. Deux joueurs peuvent avoir la même carte.</p>
+
+  <h3>2.2 Les Terrains</h3>
+  <p>La zone de jeu se divise en <b>2 Terrains</b> (un par joueur). Chaque terrain possède :</p>
+  <ul>
+    <li>Un <b>Banc</b> — les cartes sur le banc ne peuvent ni attaquer ni être attaquées</li>
+    <li>Une <b>zone d'invocations</b> (lignes)</li>
+    <li>Une <b>zone de combattant</b></li>
+  </ul>
+
+  <div class="note">
+    💡 Une invocation doit être posée sur la première ligne disponible proche de la ligne de combattant.<br>
+    Si 4 invocations s'alignent (ex: Reclusa + Doom Bloom), elles sont posées aux extrémités entre les cases et comptent comme étant sur 2 lignes simultanément.
+  </div>
+
+  <div class="warning">
+    ⚠️ Une carte qui change de terrain ne peut attaquer que les cartes du terrain en face d'elle, mais vous en gardez le contrôle total.
+  </div>
+
+  <!-- ========== SECTION 3 ========== -->
+  <h2>🕐 3. Début du Tour</h2>
+
+  <h3>3.1 Révélation d'équipe</h3>
+  <p>Les équipes sont choisies <b>en secret</b>, puis révélées simultanément en début de partie.</p>
+  <p>Pour savoir qui commence : utilisez <b>1d2</b> ou un pile ou face.</p>
+
+  <h3>3.2 Tour de Placement</h3>
+  <p>Avant le combat, chaque joueur sort <b>1 carte</b> de son banc, chacun leur tour.</p>
+
+  <!-- ========== SECTION 4 ========== -->
+  <h2>⚡ 4. Points d'Action (PA)</h2>
+
+  <p>À partir du <b>Tour 2</b>, chaque joueur dispose de <b>3 PA</b> par tour.</p>
+
+  <p>Les PA permettent de :</p>
+  <ul>
+    <li>Sortir un combattant du banc → terrain <b>(1 PA)</b></li>
+    <li>Attaquer avec un combattant <b>(1 PA)</b></li>
+    <li>Rentrer un combattant sur le banc <b>(1 PA)</b></li>
+    <li>Sortir <b>ET</b> attaquer avec la même carte <b>(2 PA)</b></li>
+  </ul>
+
+  <div class="warning">
+    ⚠️ Règles importantes :<br>
+    — Impossible d'attaquer 2× avec la même carte<br>
+    — Impossible de rentrer une carte et de la ressortir le même tour<br>
+    — Les actions des invocations ne coûtent pas de PA<br>
+    — Vous devez utiliser au moins 1 PA par tour<br>
+    — Les PA ne se cumulent pas d'un tour à l'autre
+  </div>
+
+  <!-- ========== SECTION 5 ========== -->
+  <h2>🔄 5. Déroulement des Tours</h2>
+
+  <h3>5.1 Tour 1</h3>
+  <p>Le joueur qui commence démarre avec <b>1 PA</b>, le second avec <b>2 PA</b>.</p>
+  <p>À partir du Tour 2 : <b>3 PA</b> chacun.</p>
+
+  <h3>5.2 Tour des Effets / Invocations</h3>
+  <p>Les invocations et effets agissent à la <b>fin du tour</b>. Une invocation qui vient d'apparaître joue à partir du <b>prochain tour</b>.</p>
+  <div class="note">
+    💡 Un tour se termine après que les 2 joueurs ont joué.
+  </div>
+
+  <!-- ========== SECTION 6 ========== -->
+  <h2>🏷️ 6. Les Classes</h2>
+  <ul>
+    <li><b>Attaquant</b> — gros dégâts, faible survie</li>
+    <li><b>Défense</b> — endurance, protection</li>
+    <li><b>Technique</b> — mécaniques complexes, invocations</li>
+    <li><b>Puissance</b> — équilibre dégâts / résistance</li>
+    <li><b>Ruse</b> — manipulation des règles et du rythme</li>
+    <li><b>Explosif</b> — faibles PV, dégâts qui scalent avec le risque</li>
+  </ul>
+
+  <!-- ========== SECTION 7 ========== -->
+  <h2>🔮 7. Les Invocations</h2>
+
+  <table class="statuts-table">
+    <tr>
+      <th>Type</th>
+      <th>Comportement</th>
+    </tr>
+    <tr>
+      <td><b>Invocation</b></td>
+      <td>Invoquée par un combattant, agit en fin de tour</td>
+    </tr>
+    <tr>
+      <td><b>Objet</b></td>
+      <td>Spawn quand un combattant entre en jeu, ne peut pas être déplacé ni recevoir de statut</td>
+    </tr>
+    <tr>
+      <td><b>Trap</b></td>
+      <td>S'applique sur une carte, ne peut pas être déplacé. La carte piégée ne peut pas rentrer au banc</td>
+    </tr>
+    <tr>
+      <td><b>Non catégorisé</b></td>
+      <td>Exclusif à certaines cartes, ne peut ni être déplacé ni recevoir de statut</td>
+    </tr>
+    <tr>
+      <td><b>Clone</b></td>
+      <td>Meurt avec son hôte, se comporte comme une invocation (ligne d'invocation)</td>
+    </tr>
+    <tr>
+      <td><b>Combattant additionnel</b></td>
+      <td>Apparaît quand une carte est jouée, se place à droite ou gauche de son hôte sur la ligne de combattant</td>
+    </tr>
+  </table>
+
+  <div class="note">💡 Une carte sans stat de PV ne peut pas être attaquée.</div>
+
+  <!-- ========== SECTION 8 ========== -->
+  <h2>💥 8. Statuts / Effets</h2>
+
+  <table class="statuts-table">
+    <tr>
+      <th>Statut</th>
+      <th>Effet</th>
+    </tr>
+    <tr><td>🔥 Brûlé</td><td>Réduit la DEF de 5</td></tr>
+    <tr><td>🖋️ Encre</td><td>Réduit la DEF de moitié</td></tr>
+    <tr><td>☠️ Poison</td><td>Inflige 5 dégâts bruts pendant 3 tours</td></tr>
+    <tr><td>❄️ Glacé</td><td>Réduit la DEF à 0</td></tr>
+    <tr><td>💫 Assommé</td><td>Ne peut pas jouer pendant X tours</td></tr>
+    <tr><td>🔩 Métallique</td><td>Invulnérable aux statuts, +5 DEF</td></tr>
+    <tr><td>😡 Colérique</td><td>Gagne un buff en Low HP</td></tr>
+    <tr><td>🌵 Épine</td><td>Renvoie la moitié des dégâts reçus à l'envoyeur</td></tr>
+    <tr><td>🟡 Wario</td><td>Unique à Wario, pas d'effet direct</td></tr>
+    <tr><td>⚖️ Déséquilibré</td><td>Pas d'effet direct</td></tr>
+    <tr><td>💔 Fragilisé</td><td>Si appliqué 2× → déclenche Assommé</td></tr>
+    <tr><td>😨 Intimidé</td><td>Transforme tous les dégâts bruts en dégâts normaux</td></tr>
+    <tr><td>👄 Gobé</td><td>Unique à Cheep Chomp — ne peut attaquer que Cheep Chomp</td></tr>
+  </table>
+
+  <h3>8.2 Dégâts adjacents</h3>
+  <p>Certaines attaques touchent les cibles <b>directement à gauche et à droite</b> de la cible principale.</p>
+  <p>Pour les invocations : adjacent = tout ce qui est dans un <b>rayon d'1 case</b>.</p>
+
+  <!-- ========== SECTION 9 ========== -->
+  <h2>💀 9. KO et fin de partie</h2>
+  <ul>
+    <li>Une carte est <b>KO</b> quand ses PV tombent à 0 → retirée de la partie</li>
+    <li>La partie se termine quand <b>toutes les cartes</b> d'un joueur sont KO</li>
+    <li>Vous pouvez déclarer <b>forfait</b> si vous estimez la partie terminée</li>
+  </ul>
+
+</div>
+</body>
+</html>
