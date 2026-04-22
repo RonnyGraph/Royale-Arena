@@ -1053,35 +1053,37 @@ function ecouterParties() {
       }
     };
 
-    // ==========================================================
-    // REJOINDRE UNE PARTIE — via ID Firestore (bouton carte)
-    // ==========================================================
-    async function rejoindrePartieParId(partieId, code) {
-      try {
-        // Met à jour le statut de la partie
-        await updateDoc(doc(db, "parties", partieId), {
-          adversaire:   currentPseudo,
-          adversaireId: currentUserId,
-          statut:       'en_cours'
-        });
+   // ==========================================================
+// REJOINDRE UNE PARTIE — via ID Firestore (bouton carte)
+// ==========================================================
+async function rejoindrePartieParId(partieId, code) {
+  try {
+    // Met à jour le statut de la partie
+    await updateDoc(doc(db, "parties", partieId), {
+      adversaire:   currentPseudo,
+      adversaireId: currentUserId,
+      statut:       'en_cours'
+    });
 
-        // Log dans le chat
-        await addDoc(collection(db, "chat"), {
-          texte: `🚪 ${currentPseudo} a rejoint la partie [${code}].`,
-          type:  'log',
-          at:    serverTimestamp()
-        });
+    // Log dans le chat
+    await addDoc(collection(db, "chat"), {
+      texte: `🚪 ${currentPseudo} a rejoint la partie [${code}].`,
+      type:  'log',
+      at:    serverTimestamp()
+    });
 
-        fermerModal('modal-rejoindre');
+    fermerModal('modal-rejoindre');
 
-       // Redirige l'adversaire vers la page de jeu en tant que j2
-window.location.href = `game.html?partie=${partieId}&joueur=j2`;
+    // Redirige J2 vers la page de jeu
+    console.log("✅ Redirection J2 vers game.html");
+    window.location.href = `game.html?partie=${partieId}&joueur=j2`;
 
+  } catch (err) {
+    console.error("Erreur rejoindre partie par ID :", err);
+    alert("Erreur : " + err.message);
+  }
+}
 
-      } catch (err) {
-        console.error("Erreur rejoindre partie par ID :", err);
-      }
-    }
 
     // ==========================================================
     // JOUEURS CONNECTÉS — Toggle panneau dépliable
