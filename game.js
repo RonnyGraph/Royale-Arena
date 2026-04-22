@@ -342,27 +342,10 @@ document.getElementById('btnPret').addEventListener('click', async () => {
 });
 
 
-// ============================================================
-// DEMARRAGE DE LA PARTIE
-// Masque l'overlay et initialise le terrain
-// ============================================================
-async function demarrerPartie() {
-  // Masquer l'overlay de sélection
-  document.getElementById('overlaySelection').style.display = 'none';
-
-  // Récupérer les sélections des 2 joueurs
-  const moiSnap = await getDoc(selectionMoiRef);
-  const advSnap = await getDoc(selectionAdvRef);
-
-  const monEquipe  = moiSnap.data().cartes;
-  const equipeAdv  = advSnap.data().cartes;
-
- // Lance l'initialisation du terrain avec les 2 équipes
-initialiserTerrain(monEquipe, equipeAdv);
 
 
   // → Étape 3 : initialiser le terrain avec ces données
-}
+
 // ============================================================
 // ETAT GLOBAL DE LA PARTIE
 // Contient toutes les données du jeu en temps réel
