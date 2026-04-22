@@ -1,37 +1,38 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Royale Arena - Lobby</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Royale Arena — Lobby</title>
   <style>
     /* ============================================================
-       RESET & VARIABLES
+       VARIABLES & RESET
     ============================================================ */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
     :root {
-      --bg-main:      #1a1a2e;
-      --bg-panel:     #16213e;
-      --bg-card:      #0f3460;
-      --bg-input:     #1a1a2e;
-      --accent:       #e94560;
-      --accent-hover: #ff5f7a;
-      --text:         #ffffff;
-      --text-muted:   #8888aa;
-      --border:       #2a2a4a;
-      --log-color:    #ff4444;
-      --success:      #4cc9f0;
-      --danger:       #e94560;
+      --bg:          #0f0f1a;
+      --bg-panel:    #13131f;
+      --bg-card:     #1a1a2e;
+      --bg-input:    #1e1e30;
+      --accent:      #7b5ea7;
+      --accent-hover:#a07fd4;
+      --text:        #e8e8f0;
+      --text-muted:  #6b6b8a;
+      --border:      #2a2a45;
+      --success:     #4caf7d;
+      --danger:      #e05c5c;
+      --log-color:   #7b9ea7;
     }
 
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
-      font-family: Arial, sans-serif;
-      background: var(--bg-main);
+      background: var(--bg);
       color: var(--text);
+      font-family: 'Segoe UI', sans-serif;
       height: 100vh;
-      overflow: hidden;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
     }
 
     /* ============================================================
@@ -40,63 +41,76 @@
     #login-screen {
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
-      min-height: 100vh;
-      gap: 20px;
+      justify-content: center;
+      height: 100vh;
+      gap: 24px;
     }
 
-    #login-screen h1 { color: var(--accent); font-size: 2.5em; }
+    #login-screen h1 {
+      font-size: 2rem;
+      color: var(--accent-hover);
+      letter-spacing: 3px;
+    }
 
-    #login-screen .box {
-      background: var(--bg-panel);
-      padding: 30px 40px;
-      border-radius: 10px;
+    .box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
       display: flex;
       flex-direction: column;
-      gap: 15px;
-      min-width: 300px;
+      gap: 14px;
+      width: 340px;
     }
 
-    #login-screen input {
+    .box label { font-size: 0.9rem; color: var(--text-muted); }
+
+    .box input {
       padding: 10px;
-      border-radius: 5px;
-      border: none;
-      font-size: 16px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 1rem;
+      outline: none;
     }
 
-    #login-screen button {
+    .box input:focus { border-color: var(--accent); }
+
+    .box button {
       padding: 10px;
       background: var(--accent);
       color: white;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
+      font-weight: 700;
       cursor: pointer;
-      font-size: 16px;
+      font-size: 1rem;
+      transition: background 0.2s;
     }
 
-    #login-screen button:hover { background: var(--accent-hover); }
+    .box button:hover { background: var(--accent-hover); }
 
-    #login-error { color: #ff4c4c; font-size: 14px; min-height: 18px; }
+    #login-error { color: var(--danger); font-size: 0.82rem; min-height: 16px; }
 
     /* ============================================================
-       LOBBY — STRUCTURE GLOBALE
+       LOBBY PRINCIPAL
     ============================================================ */
     #lobby {
-      display: none; /* Caché jusqu'à connexion */
+      display: none;
       flex-direction: column;
       height: 100vh;
       overflow: hidden;
     }
 
-    /* ── Header ── */
     #lobby header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
       padding: 12px 24px;
       background: var(--bg-panel);
-      border-bottom: 2px solid var(--accent);
+      border-bottom: 1px solid var(--border);
       flex-shrink: 0;
     }
 
@@ -162,22 +176,55 @@
     .btn-create:hover { background: var(--accent-hover); }
 
     .btn-join {
-      background: var(--bg-card);
-      color: var(--text);
-      border: 1px solid var(--border);
+      background: none;
+      border: 2px solid var(--accent) !important;
+      color: var(--accent-hover);
     }
-    .btn-join:hover { border-color: var(--accent); color: var(--accent-hover); }
 
-    .divider { border-color: var(--border); margin: 4px 0; }
+    .btn-join:hover { background: #1e1e40; }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+    }
 
     .section-title {
       font-size: 0.75rem;
+      font-weight: 700;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 1px;
     }
 
-    .parties-list { display: flex; flex-direction: column; gap: 8px; }
+    /* Cartes de parties */
+    .partie-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.82rem;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .partie-card b { color: var(--accent-hover); }
+
+    .partie-card button {
+      margin-top: 4px;
+      padding: 5px 10px;
+      background: var(--accent);
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+      align-self: flex-start;
+    }
+
+    .partie-card button:hover { background: var(--accent-hover); }
 
     /* ============================================================
        COLONNE CENTRE
@@ -188,30 +235,28 @@
       overflow: hidden;
     }
 
-    /* Barre du haut */
     .chat-topbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 16px;
-      background: var(--bg-panel);
+      padding: 12px 16px;
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
     }
 
-    .chat-topbar h2 { font-size: 0.95rem; color: var(--text-muted); font-weight: 500; }
+    .chat-topbar h2 { font-size: 1rem; color: var(--accent-hover); }
 
     .btn-players {
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 6px 14px;
-      background: var(--bg-card);
+      background: none;
       border: 1px solid var(--border);
-      border-radius: 20px;
+      border-radius: 8px;
       color: var(--text);
+      padding: 6px 12px;
       cursor: pointer;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       transition: all 0.2s;
     }
 
@@ -237,6 +282,19 @@
     .players-panel.open { max-height: 200px; padding: 12px 16px; }
 
     .players-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    /* ── Tag joueur ── */
+    .player-tag {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.8rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
 
     /* Messages */
     .chat-messages {
@@ -267,19 +325,18 @@
       font-weight: 700;
     }
 
-    /* Input */
+    /* Zone de saisie */
     .chat-input-zone {
       display: flex;
       gap: 8px;
       padding: 12px 16px;
-      background: var(--bg-panel);
       border-top: 1px solid var(--border);
       flex-shrink: 0;
     }
 
     .chat-input-zone input {
       flex: 1;
-      padding: 8px 12px;
+      padding: 10px 14px;
       background: var(--bg-input);
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -290,16 +347,16 @@
     }
 
     .chat-input-zone input:focus { border-color: var(--accent); }
-    .chat-input-zone input::placeholder { color: var(--text-muted); }
 
     .btn-send {
-      padding: 8px 16px;
+      padding: 10px 18px;
       background: var(--accent);
       border: none;
       border-radius: 8px;
       color: white;
       font-weight: 700;
       cursor: pointer;
+      font-size: 0.85rem;
       transition: background 0.2s;
     }
 
@@ -314,7 +371,7 @@
       display: flex;
       flex-direction: column;
       padding: 16px;
-      gap: 10px;
+      gap: 12px;
     }
 
     .btn-tab {
@@ -368,10 +425,8 @@
       background: none;
       border: none;
       color: var(--text-muted);
-      font-size: 1.3rem;
+      font-size: 1.2rem;
       cursor: pointer;
-      padding: 2px 8px;
-      border-radius: 4px;
       transition: color 0.2s;
     }
 
@@ -380,11 +435,8 @@
     .right-panel-content {
       flex: 1;
       overflow-y: auto;
-      padding: 20px;
+      padding: 16px;
     }
-
-    .right-panel-content::-webkit-scrollbar { width: 6px; }
-    .right-panel-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
     /* ============================================================
        MODALS
@@ -392,31 +444,28 @@
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.75);
+      background: rgba(0,0,0,0.6);
       z-index: 200;
-      display: flex;
+      display: none;
       align-items: center;
       justify-content: center;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s;
     }
 
-    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal-overlay.open { display: flex; }
 
     .modal {
-      background: var(--bg-panel);
+      background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 28px 32px;
-      min-width: 320px;
+      padding: 28px;
+      width: 360px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 16px;
     }
 
     .modal h3 { color: var(--accent-hover); font-size: 1.1rem; }
-    .modal p   { color: var(--text-muted); font-size: 0.88rem; }
+    .modal p  { color: var(--text-muted); font-size: 0.88rem; }
 
     .modal input {
       padding: 10px;
@@ -440,7 +489,7 @@
       padding: 12px;
       background: var(--bg-card);
       border-radius: 8px;
-      display: none; /* Affiché après création */
+      display: none;
     }
 
     .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
@@ -527,6 +576,7 @@
           </button>
         </div>
 
+        <!-- Panneau joueurs dépliable -->
         <div class="players-panel" id="players-panel">
           <div class="players-grid" id="players-grid"></div>
         </div>
@@ -558,15 +608,12 @@
 
   <!-- ============================================================
        PANNEAU LATÉRAL DROIT
-       Le contenu est chargé dynamiquement via fetch()
-       depuis regles.html ou galerie.html
   ============================================================ -->
   <div class="right-panel" id="right-panel">
     <div class="right-panel-header">
       <h3 id="right-panel-title">Panneau</h3>
       <button class="btn-close" onclick="fermerPanel()">✕</button>
     </div>
-    <!-- Zone de contenu injectée dynamiquement -->
     <div class="right-panel-content" id="right-panel-content"></div>
   </div>
 
@@ -617,7 +664,9 @@
       getAuth, signInAnonymously, onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
     import {
-      doc, setDoc, getDoc
+      collection, doc, setDoc, getDoc, addDoc, onSnapshot,
+      serverTimestamp, query, orderBy, limit,
+      deleteDoc, updateDoc
     } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
     const auth = getAuth(app);
@@ -632,21 +681,22 @@
     const changePseudoBtn = document.getElementById('change-pseudo-btn');
 
     // ── Variables globales ──
-    let currentUserId = null;
-    let currentPseudo = null;
-    let panelOuvert   = null; // 'regles' | 'galerie' | null
+    let currentUserId   = null;
+    let currentPseudo   = null;
+    let panelOuvert     = null;   // 'regles' | 'galerie' | null
+    let presenceDocRef  = null;   // Référence doc présence du joueur
+    let unsubChat       = null;   // Unsub listener chat
+    let unsubPresence   = null;   // Unsub listener présence
+    let unsubParties    = null;   // Unsub listener parties
 
     // ── Cache des panneaux chargés ──
-    // Évite de re-fetcher le fichier HTML à chaque ouverture
     const panneauCache = {};
 
-    // Titres affichés dans le header du panneau
     const panneauTitres = {
       regles:  '📖 Règles du jeu',
       galerie: '🎴 Galerie des cartes'
     };
 
-    // Fichiers HTML externes à charger
     const panneauFichiers = {
       regles:  'regles.html',
       galerie: 'galerie.html'
@@ -660,42 +710,43 @@
       console.error(err);
     });
 
+    // Écoute le changement d'état d'auth
     onAuthStateChanged(auth, async (user) => {
       if (!user) return;
       currentUserId = user.uid;
-      console.log("✅ Auth anonyme OK, userId =", currentUserId);
 
-      // Vérifie si un pseudo existe déjà en Firestore pour cet utilisateur
       const userDocRef = doc(db, "users", currentUserId);
       const userSnap   = await getDoc(userDocRef);
 
+      // Si le joueur a déjà un pseudo sauvegardé → on le reconnecte direct
       if (userSnap.exists() && userSnap.data().pseudo) {
-        // Pseudo trouvé → connexion directe sans passer par l'écran login
-        entrerDansLobby(userSnap.data().pseudo);
+        const pseudo = userSnap.data().pseudo;
+        entrerDansLobby(pseudo);
       }
-      // Sinon l'écran de connexion reste affiché
     });
 
     // ==========================================================
-    // BOUTON LOGIN — Validation du pseudo
+    // VALIDATION PSEUDO
     // ==========================================================
     loginBtn.addEventListener('click', async () => {
       const pseudo = pseudoInput.value.trim();
 
-      // Validation basique
-      if (pseudo.length < 2) {
-        loginError.textContent = "Le pseudo doit faire au moins 2 caractères.";
+      // Vérifie longueur et caractères autorisés (lettres, chiffres, _, -)
+      if (pseudo.length < 2 || pseudo.length > 20) {
+        loginError.textContent = "Pseudo : 2 à 20 caractères.";
+        return;
+      }
+
+      if (!/^[a-zA-Z0-9_\-]+$/.test(pseudo)) {
+        loginError.textContent = "Caractères autorisés : lettres, chiffres, _ et -";
         return;
       }
 
       loginError.textContent = '';
 
       try {
-        // Sauvegarde le pseudo en Firestore
-        const userDocRef = doc(db, "users", currentUserId);
-        await setDoc(userDocRef, { pseudo }, { merge: true });
-
-        // Sauvegarde locale pour référence rapide
+        // Sauvegarde le pseudo dans Firestore
+        await setDoc(doc(db, "users", currentUserId), { pseudo }, { merge: true });
         localStorage.setItem('tcg_pseudo', pseudo);
         entrerDansLobby(pseudo);
       } catch (err) {
@@ -710,72 +761,302 @@
     function entrerDansLobby(pseudo) {
       currentPseudo               = pseudo;
       loginScreen.style.display   = 'none';
-      lobbyEl.style.display       = 'flex'; // flex pour les 3 colonnes
+      lobbyEl.style.display       = 'flex';
       currentPseudoEl.textContent = pseudo;
+
+      // Lance tous les listeners temps réel
+      enregistrerPresence();
+      ecouterPresence();
+      ecouterChat();
+      ecouterParties();
     }
 
     // ==========================================================
     // CHANGER DE PSEUDO
     // ==========================================================
     changePseudoBtn.addEventListener('click', () => {
-      pseudoInput.value          = currentPseudoEl.textContent;
-      loginError.textContent     = '';
-      lobbyEl.style.display      = 'none';
-      loginScreen.style.display  = 'flex';
+      // Retire la présence avant de retourner à l'écran de connexion
+      if (presenceDocRef) deleteDoc(presenceDocRef);
+
+      // Arrête les listeners
+      if (unsubChat)     unsubChat();
+      if (unsubPresence) unsubPresence();
+      if (unsubParties)  unsubParties();
+
+      pseudoInput.value         = currentPseudoEl.textContent;
+      loginError.textContent    = '';
+      lobbyEl.style.display     = 'none';
+      loginScreen.style.display = 'flex';
       pseudoInput.focus();
     });
 
     // ==========================================================
-    // CHAT — Envoyer un message
+    // PRÉSENCE — Enregistre le joueur comme "en ligne"
     // ==========================================================
-    function envoyerMessage() {
-      const input = document.getElementById('chat-input');
-      const texte = input.value.trim();
-      if (!texte) return;
+    async function enregistrerPresence() {
+      // Doc dans la collection "presence" avec l'UID du joueur
+      presenceDocRef = doc(db, "presence", currentUserId);
 
-      const now   = new Date();
-      const heure = `${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+      await setDoc(presenceDocRef, {
+        pseudo:    currentPseudo,
+        entreeAt:  serverTimestamp()
+      });
 
-      ajouterMessageDom({ auteur: currentPseudo, texte, heure, type: 'msg' });
-      input.value = '';
+      // Supprime le doc quand la fenêtre est fermée / rechargée
+      window.addEventListener('beforeunload', () => {
+        // deleteDoc est async mais on fait de notre mieux
+        navigator.sendBeacon; // fallback navigateur
+        deleteDoc(presenceDocRef);
+      });
     }
 
-    // Ajoute un message dans le DOM du chat
-    function ajouterMessageDom({ auteur, texte, heure, type }) {
+    // ==========================================================
+    // PRÉSENCE — Écoute les joueurs en ligne en temps réel
+    // ==========================================================
+    function ecouterPresence() {
+      const presenceCol = collection(db, "presence");
+
+      unsubPresence = onSnapshot(presenceCol, (snap) => {
+        const grid  = document.getElementById('players-grid');
+        const label = document.getElementById('btn-players-label');
+
+        // Vide la grille
+        grid.innerHTML = '';
+
+        snap.forEach((d) => {
+          const data = d.data();
+
+          // Crée un tag par joueur
+          const tag = document.createElement('div');
+          tag.className = 'player-tag';
+          // Dot vert + pseudo
+          tag.innerHTML = `<span class="online-dot"></span>${data.pseudo}`;
+          grid.appendChild(tag);
+        });
+
+        // Met à jour le compteur dans le bouton
+        label.textContent = `${snap.size} joueur${snap.size > 1 ? 's' : ''} connecté${snap.size > 1 ? 's' : ''}`;
+      });
+    }
+
+    // ==========================================================
+    // CHAT — Écoute les messages en temps réel (50 derniers)
+    // ==========================================================
+    function ecouterChat() {
+      const chatCol = collection(db, "chat");
+      const q       = query(chatCol, orderBy("at"), limit(50));
+
+      unsubChat = onSnapshot(q, (snap) => {
+        snap.docChanges().forEach((change) => {
+          // On n'ajoute que les nouveaux messages (pas les modifs/suppressions)
+          if (change.type === 'added') {
+            const data = change.doc.data();
+            ajouterMessageDom(data);
+          }
+        });
+      });
+    }
+
+    // ==========================================================
+    // CHAT — Envoyer un message
+    // ==========================================================
+    async function envoyerMessage() {
+      const input = document.getElementById('chat-input');
+      const texte = input.value.trim();
+      if (!texte || !currentPseudo) return;
+
+      input.value = '';
+
+      try {
+        // Ajoute le message dans Firestore
+        await addDoc(collection(db, "chat"), {
+          auteur: currentPseudo,
+          texte,
+          type:   'msg',
+          at:     serverTimestamp()
+        });
+      } catch (err) {
+        console.error("Erreur envoi message :", err);
+      }
+    }
+
+    // ==========================================================
+    // CHAT — Affichage d'un message dans le DOM
+    // ==========================================================
+    function ajouterMessageDom(data) {
       const zone = document.getElementById('chat-messages');
       const el   = document.createElement('div');
 
-      if (type === 'log') {
-        // Log système : rouge italique
-        el.className   = 'msg-log';
-        el.textContent = texte;
+      if (data.type === 'log') {
+        // Message système (italique)
+        el.className   = 'msg msg-log';
+        el.textContent = data.texte;
       } else {
-        // Message joueur normal
+        // Message joueur avec heure
         el.className = 'msg';
-        el.innerHTML = `
-          <span class="msg-author">${auteur}</span>
-          ${texte}
-          <span class="msg-time">${heure}</span>
-        `;
+
+        // Heure locale à partir du timestamp Firestore
+        let heure = '';
+        if (data.at) {
+          const d = data.at.toDate();
+          heure   = `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+        }
+
+        el.innerHTML =
+          `<span class="msg-author">${data.auteur}</span>` +
+          `${data.texte}` +
+          `<span class="msg-time">${heure}</span>`;
       }
 
       zone.appendChild(el);
-
-      // Limite à 100 messages dans le DOM
-      const tous = zone.querySelectorAll('.msg, .msg-log');
-      if (tous.length > 100) tous[0].remove();
-
       // Scroll automatique vers le bas
       zone.scrollTop = zone.scrollHeight;
     }
 
-    // Raccourci pour les logs système
-    function ajouterLog(texte) {
-      ajouterMessageDom({ texte, type: 'log' });
+    // ==========================================================
+    // PARTIES — Écoute les parties ouvertes en temps réel
+    // ==========================================================
+    function ecouterParties() {
+      const partiesCol = collection(db, "parties");
+
+      unsubParties = onSnapshot(partiesCol, (snap) => {
+        const liste = document.getElementById('parties-list');
+        liste.innerHTML = '';
+
+        if (snap.empty) {
+          liste.innerHTML = '<div style="color:var(--text-muted); font-size:0.8rem;">Aucune partie en cours...</div>';
+          return;
+        }
+
+        snap.forEach((d) => {
+          const data = d.data();
+          const card = document.createElement('div');
+          card.className = 'partie-card';
+
+          card.innerHTML =
+            `<b>Code : ${data.code}</b>` +
+            `<span>Créée par : ${data.createur}</span>` +
+            `<span>Statut : ${data.statut === 'attente' ? '⏳ En attente' : '⚔️ En cours'}</span>`;
+
+          // Bouton rejoindre uniquement si la partie attend un joueur
+          // et que ce n'est pas notre propre partie
+          if (data.statut === 'attente' && data.createurId !== currentUserId) {
+            const btn = document.createElement('button');
+            btn.textContent = 'Rejoindre';
+            btn.onclick     = () => rejoindrePartieParId(d.id, data.code);
+            card.appendChild(btn);
+          }
+
+          liste.appendChild(card);
+        });
+      });
     }
 
-    // Expose au HTML (nécessaire car on est dans un module ES6)
-    window.envoyerMessage = envoyerMessage;
+    // ==========================================================
+    // CRÉER UNE PARTIE — Firebase
+    // ==========================================================
+    window.creerPartie = async function() {
+      // Génère un code sans ambiguïtés O/0 I/1
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = '';
+      for (let i = 0; i < 6; i++) {
+        code += chars[Math.floor(Math.random() * chars.length)];
+      }
+
+      const codeDisplay = document.getElementById('code-display');
+      codeDisplay.textContent   = code;
+      codeDisplay.style.display = 'block';
+
+      const btn = document.getElementById('btn-creer-confirm');
+      btn.textContent = '⏳ En attente...';
+      btn.disabled    = true;
+
+      try {
+        // Crée le document de partie dans Firestore
+        await addDoc(collection(db, "parties"), {
+          code,
+          createur:   currentPseudo,
+          createurId: currentUserId,
+          statut:     'attente',     // 'attente' | 'en_cours' | 'terminee'
+          creedAt:    serverTimestamp()
+        });
+
+        // Log dans le chat
+        await addDoc(collection(db, "chat"), {
+          texte: `⚔️ ${currentPseudo} a créé une partie. [Code : ${code}]`,
+          type:  'log',
+          at:    serverTimestamp()
+        });
+
+      } catch (err) {
+        console.error("Erreur création partie :", err);
+      }
+    };
+
+    // ==========================================================
+    // REJOINDRE UNE PARTIE — via saisie de code
+    // ==========================================================
+    window.rejoindrePartie = async function() {
+      const code = document.getElementById('input-code-rejoindre').value.trim().toUpperCase();
+
+      if (code.length < 6) {
+        alert('Le code doit faire 6 caractères !');
+        return;
+      }
+
+      // Cherche la partie correspondante dans le snapshot actuel
+      // (on écoute déjà les parties, donc on peut itérer le DOM
+      //  mais mieux vaut requêter Firestore directement)
+      const { getDocs, where } = await import(
+        "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"
+      );
+
+      try {
+        const partiesCol = collection(db, "parties");
+        const q          = query(partiesCol, where("code", "==", code), where("statut", "==", "attente"));
+        const snap       = await getDocs(q);
+
+        if (snap.empty) {
+          alert("Aucune partie en attente avec ce code.");
+          return;
+        }
+
+        const partieDoc = snap.docs[0];
+        await rejoindrePartieParId(partieDoc.id, code);
+
+      } catch (err) {
+        console.error("Erreur rejoindre partie :", err);
+      }
+    };
+
+    // ==========================================================
+    // REJOINDRE UNE PARTIE — via ID Firestore (bouton carte)
+    // ==========================================================
+    async function rejoindrePartieParId(partieId, code) {
+      try {
+        // Met à jour le statut de la partie
+        await updateDoc(doc(db, "parties", partieId), {
+          adversaire:   currentPseudo,
+          adversaireId: currentUserId,
+          statut:       'en_cours'
+        });
+
+        // Log dans le chat
+        await addDoc(collection(db, "chat"), {
+          texte: `🚪 ${currentPseudo} a rejoint la partie [${code}].`,
+          type:  'log',
+          at:    serverTimestamp()
+        });
+
+        fermerModal('modal-rejoindre');
+
+        // TODO : rediriger vers la page de jeu
+        // window.location.href = `game.html?partie=${partieId}`;
+
+      } catch (err) {
+        console.error("Erreur rejoindre partie par ID :", err);
+      }
+    }
 
     // ==========================================================
     // JOUEURS CONNECTÉS — Toggle panneau dépliable
@@ -786,36 +1067,28 @@
 
     // ==========================================================
     // PANNEAU LATÉRAL DROIT — Chargement dynamique via fetch()
-    // Le contenu HTML est chargé depuis un fichier externe,
-    // mis en cache après le premier chargement.
     // ==========================================================
     window.ouvrirPanel = async function(nom) {
 
-      // Re-clic sur le même onglet → fermer le panneau
+      // Re-clic sur le même onglet → ferme
       if (panelOuvert === nom) {
         fermerPanel();
         return;
       }
 
-      // Retire la classe active sur tous les boutons onglets
+      // Boutons onglets
       document.getElementById('btn-regles').classList.remove('active');
       document.getElementById('btn-galerie').classList.remove('active');
-
-      // Active le bouton correspondant
       document.getElementById(`btn-${nom}`).classList.add('active');
 
-      // Met à jour le titre du panneau
-      document.getElementById('right-panel-title').textContent = panneauTitres[nom];
-
+      // Ouvre le panneau
+      const panel  = document.getElementById('right-panel');
+      const titre  = document.getElementById('right-panel-title');
       const contenu = document.getElementById('right-panel-content');
-      // Injecte le contenu depuis le cache
-contenu.innerHTML = panneauCache[nom];
 
-// Ré-initialise la galerie si nécessaire (le DOM est recréé à chaque injection)
-if (nom === 'galerie') {
-  const { initGalerie } = await import('./galerie.js');
-  initGalerie();
-}
+      titre.textContent = panneauTitres[nom];
+      panel.classList.add('open');
+      panelOuvert = nom;
 
       // Charge le fichier externe si pas encore en cache
       if (!panneauCache[nom]) {
@@ -825,41 +1098,41 @@ if (nom === 'galerie') {
           const reponse = await fetch(panneauFichiers[nom]);
           if (!reponse.ok) throw new Error(`Fichier introuvable (${reponse.status})`);
 
-          const html    = await reponse.text();
-          const parser  = new DOMParser();
-          const docExt  = parser.parseFromString(html, 'text/html');
+          const html   = await reponse.text();
+          const parser = new DOMParser();
+          const docExt = parser.parseFromString(html, 'text/html');
 
-          // Injecte les styles du fichier externe dans <head> (une seule fois)
+          // Injecte les styles du fichier externe (une seule fois)
           docExt.querySelectorAll('style').forEach(styleEl => {
             if (!document.querySelector(`style[data-panneau="${nom}"]`)) {
               const clone = document.createElement('style');
-              clone.setAttribute('data-panneau', nom); // marqueur anti-doublon
+              clone.setAttribute('data-panneau', nom);
               clone.textContent = styleEl.textContent;
               document.head.appendChild(clone);
             }
           });
 
-          // Après avoir mis le HTML en cache et l'avoir injecté...
-panneauCache[nom] = docExt.body.innerHTML;
-contenu.innerHTML = panneauCache[nom]; // ← déjà présent plus bas, mais on en a besoin ici
-
-// Si c'est la galerie, on charge et initialise galerie.js       
+          // Met en cache et injecte le HTML
+          panneauCache[nom] = docExt.body.innerHTML;
 
         } catch (err) {
-          // Affiche l'erreur dans le panneau mais l'ouvre quand même
-          contenu.innerHTML = `<div style="padding:20px;color:#e94560;">❌ Erreur : ${err.message}</div>`;
-          document.getElementById('right-panel').classList.add('open');
-          panelOuvert = nom;
+          contenu.innerHTML = `<div style="padding:20px;color:var(--danger);">Erreur : ${err.message}</div>`;
           return;
         }
       }
 
-      // Injecte le contenu depuis le cache
+      // Injecte le contenu (depuis cache ou fraîchement chargé)
       contenu.innerHTML = panneauCache[nom];
 
-      // Ouvre le panneau (animation CSS via la classe .open)
-      document.getElementById('right-panel').classList.add('open');
-      panelOuvert = nom;
+      // Initialise la galerie si nécessaire (APRÈS injection dans le DOM)
+      if (nom === 'galerie') {
+        try {
+          const { initGalerie } = await import('./galerie.js');
+          initGalerie();
+        } catch (err) {
+          console.error("Erreur init galerie :", err);
+        }
+      }
     };
 
     // Ferme le panneau latéral
@@ -871,71 +1144,32 @@ contenu.innerHTML = panneauCache[nom]; // ← déjà présent plus bas, mais on 
     };
 
     // ==========================================================
-    // MODALS
+    // MODALS — Ouvrir / Fermer
     // ==========================================================
     window.ouvrirModalCreer = function() {
+      // Remet la modal dans son état initial à chaque ouverture
+      const codeDisplay = document.getElementById('code-display');
+      codeDisplay.style.display = 'none';
+      codeDisplay.textContent   = '——';
+
+      const btn = document.getElementById('btn-creer-confirm');
+      btn.textContent = 'Créer';
+      btn.disabled    = false;
+
       document.getElementById('modal-creer').classList.add('open');
-      // Réinitialise l'état de la modal
-      document.getElementById('code-display').style.display      = 'none';
-      document.getElementById('btn-creer-confirm').style.display = 'inline-block';
-      document.getElementById('btn-creer-confirm').disabled      = false;
-      document.getElementById('btn-creer-confirm').textContent   = 'Créer';
     };
 
     window.ouvrirModalRejoindre = function() {
-      document.getElementById('modal-rejoindre').classList.add('open');
       document.getElementById('input-code-rejoindre').value = '';
+      document.getElementById('modal-rejoindre').classList.add('open');
     };
 
     window.fermerModal = function(id) {
       document.getElementById(id).classList.remove('open');
     };
 
-    // Ferme la modal en cliquant sur l'overlay (hors de la modale)
-    document.querySelectorAll('.modal-overlay').forEach(overlay => {
-      overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) fermerModal(overlay.id);
-      });
-    });
-
-    // ==========================================================
-    // CRÉER UNE PARTIE (placeholder — Firebase viendra après)
-    // ==========================================================
-    window.creerPartie = function() {
-      // Génère un code aléatoire de 6 caractères (sans ambiguïtés O/0 I/1)
-      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-      let code = '';
-      for (let i = 0; i < 6; i++) {
-        code += chars[Math.floor(Math.random() * chars.length)];
-      }
-
-      // Affiche le code dans la modal
-      const codeDisplay = document.getElementById('code-display');
-      codeDisplay.textContent   = code;
-      codeDisplay.style.display = 'block';
-
-      // Désactive le bouton pour éviter de recréer une partie
-      const btn = document.getElementById('btn-creer-confirm');
-      btn.textContent = '⏳ En attente...';
-      btn.disabled    = true;
-
-      ajouterLog(`⚔️ ${currentPseudo} a créé une partie. [Code : ${code}]`);
-    };
-
-    // ==========================================================
-    // REJOINDRE UNE PARTIE (placeholder — Firebase viendra après)
-    // ==========================================================
-    window.rejoindrePartie = function() {
-      const code = document.getElementById('input-code-rejoindre').value.trim().toUpperCase();
-
-      if (code.length < 6) {
-        alert('Le code doit faire 6 caractères !');
-        return;
-      }
-
-      ajouterLog(`🚪 ${currentPseudo} a rejoint la partie [${code}].`);
-      fermerModal('modal-rejoindre');
-    };
+    // Expose les fonctions au HTML (nécessaire car module ES6)
+    window.envoyerMessage = envoyerMessage;
 
   </script>
 </body>
