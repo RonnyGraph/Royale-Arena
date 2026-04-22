@@ -913,44 +913,59 @@
       zone.scrollTop = zone.scrollHeight;
     }
 
-    // ==========================================================
-    // PARTIES — Écoute les parties ouvertes en temps réel
-    // ==========================================================
-    function ecouterParties() {
-      const partiesCol = collection(db, "parties");
+// ==========================================================
+// PARTIES — Écoute les parties ouvertes en temps réel
+// ==========================================================
+function ecouterParties() {
+  const partiesCol = collection(db, "parties");
 
-      unsubParties = onSnapshot(partiesCol, (snap) => {
-        const liste = document.getElementById('parties-list');
-        liste.innerHTML = '';
+  unsubParties = onSnapshot(partiesCol, (snap) => {
+    const liste = document.getElementById('parties-list');
+    liste.innerHTML = '';
 
-        if (snap.empty) {
-          liste.innerHTML = '<div style="color:var(--text-muted); font-size:0.8rem;">Aucune partie en cours...</div>';
-          return;
-        }
-
-        snap.forEach((d) => {
-          const data = d.data();
-          const card = document.createElement('div');
-          card.className = 'partie-card';
-
-          card.innerHTML =
-            `<b>Code : ${data.code}</b>` +
-            `<span>Créée par : ${data.createur}</span>` +
-            `<span>Statut : ${data.statut === 'attente' ? '⏳ En attente' : '⚔️ En cours'}</span>`;
-
-          // Bouton rejoindre uniquement si la partie attend un joueur
-          // et que ce n'est pas notre propre partie
-          if (data.statut === 'attente' && data.createurId !== currentUserId) {
-            const btn = document.createElement('button');
-            btn.textContent = 'Rejoindre';
-            btn.onclick     = () => rejoindrePartieParId(d.id, data.code);
-            card.appendChild(btn);
-          }
-
-          liste.appendChild(card);
-        });
-      });
+    if (snap.empty) {
+      liste.innerHTML = '<div style="color:var(--text-muted); font-size:0.8rem;">Aucune partie en cours...</div>';
+      return;
     }
+
+    // Construit les cartes UI pour chaque partie
+    snap.forEach((d) => {
+      const data = d.data();
+      const card = document.createElement('div');
+      card.className = 'partie-card';
+
+      card.innerHTML =
+        `<b>Code : ${data.code}</b>` +
+        `<span>Créée par : ${data.createur}</span>` +
+        `<span>Statut : ${data.statut === 'attente' ? '⏳ En attente' : '⚔️ En cours'}</span>`;
+
+      // Bouton rejoindre uniquement si la partie attend un joueur
+      // et que ce n'est pas notre propre partie
+      if (data.statut === 'attente' && data.createurId !== currentUserId) {
+        const btn = document.createElement('button');
+        btn.textContent = 'Rejoindre';
+        btn.onclick     = () => rejoindrePartieParId(d.id, data.code);
+        card.appendChild(btn);
+      }
+
+      liste.appendChild(card);
+    });
+
+    // ==========================================================
+    // REDIRECTION J1 — Si notre partie passe en 'en_cours'
+    // ==========================================================
+    snap.forEach((d) => {
+      const data = d.data();
+
+      // Si c'est notre partie ET qu'elle vient de passer en cours
+      if (data.createurId === currentUserId && data.statut === 'en_cours') {
+        window.location.href = `game.html?partie=${d.id}&joueur=j1`;
+      }
+    });
+
+  }); // fin onSnapshot
+}
+
 
     // ==========================================================
     // CRÉER UNE PARTIE — Firebase
@@ -1050,8 +1065,9 @@
 
         fermerModal('modal-rejoindre');
 
-        // TODO : rediriger vers la page de jeu
-        // window.location.href = `game.html?partie=${partieId}`;
+       // Redirige l'adversaire vers la page de jeu en tant que j2
+window.location.href = `game.html?partie=${partieId}&joueur=j2`;
+
 
       } catch (err) {
         console.error("Erreur rejoindre partie par ID :", err);
