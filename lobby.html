@@ -920,16 +920,6 @@ import {
 // ==========================================================
 function ecouterParties() {
   const partiesCol = collection(db, "parties");
-  snap.forEach((d) => {
-  const data = d.data();
-  // Debug — vérifie les valeurs dans la console
-  console.log("createurId:", data.createurId, "| currentUserId:", currentUserId, "| statut:", data.statut);
-  
-  if (data.createurId === currentUserId && data.statut === 'en_cours') {
-    window.location.href = `game.html?partie=${d.id}&joueur=j1`;
-  }
-});
-
 
   unsubParties = onSnapshot(partiesCol, (snap) => {
     const liste = document.getElementById('parties-list');
@@ -968,6 +958,9 @@ function ecouterParties() {
     // ==========================================================
     snap.forEach((d) => {
       const data = d.data();
+
+      // Debug
+      console.log("createurId:", data.createurId, "| currentUserId:", currentUserId, "| statut:", data.statut);
 
       // Si c'est notre partie ET qu'elle vient de passer en cours
       if (data.createurId === currentUserId && data.statut === 'en_cours') {
