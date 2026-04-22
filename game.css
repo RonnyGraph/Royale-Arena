@@ -1,0 +1,907 @@
+/* ============================================================
+   RESET & BASE
+============================================================ */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #1a1a2e;
+  color: white;
+  height: 100vh;
+  overflow: hidden; /* pas de scroll global, tout est dans la page */
+}
+
+/* ============================================================
+   OVERLAY DE SELECTION
+============================================================ */
+#overlaySelection {
+  position: fixed;
+  inset: 0; /* top/right/bottom/left = 0 en une ligne */
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end; /* panel collé en bas */
+  justify-content: center;
+}
+
+#selectionPanel {
+  width: 100%;
+  max-height: 85vh;
+  background: #16213e;
+  border-top: 3px solid #e94560;
+  border-radius: 20px 20px 0 0;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Les 3 slots de prévisualisation */
+#selectionSlots {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.selection-slot {
+  width: 120px;
+  height: 160px;
+  border: 2px dashed #e94560;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: #aaa;
+  background: #0f3460;
+  transition: 0.2s;
+}
+
+/* Slot qui contient une carte → bordure pleine */
+.selection-slot.rempli {
+  border-style: solid;
+  border-color: #4cc9f0;
+}
+
+/* Barre de recherche */
+#searchCartes {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  background: #0f3460;
+  color: white;
+  font-size: 15px;
+}
+
+/* Grille de la galerie */
+#galerieGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  overflow-y: auto;
+  max-height: 35vh;
+  padding: 5px;
+}
+
+/* Une carte dans la galerie */
+.galerie-carte {
+  width: 90px;
+  cursor: pointer;
+  text-align: center;
+  transition: transform 0.2s;
+}
+
+.galerie-carte:hover {
+  transform: scale(1.08);
+}
+
+.galerie-carte img {
+  width: 100%;
+  border-radius: 8px;
+  border: 2px solid transparent;
+}
+
+/* Carte sélectionnée dans la galerie */
+.galerie-carte.selectionnee img {
+  border-color: #4cc9f0;
+}
+
+.galerie-carte span {
+  display: block;
+  font-size: 11px;
+  margin-top: 4px;
+  color: #ccc;
+}
+
+/* Bouton prêt */
+#btnPret {
+  align-self: center;
+  padding: 12px 40px;
+  background: #e94560;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+#btnPret:hover { background: #ff5f7a; }
+
+/* ============================================================
+   LAYOUT PRINCIPAL : 3 colonnes
+============================================================ */
+#pageJeu {
+  display: grid;
+  grid-template-columns: 220px 1fr 220px; /* gauche | centre | droite */
+  height: 100vh;
+  gap: 0;
+}
+
+/* ============================================================
+   COLONNE GAUCHE : Tour + Logs
+============================================================ */
+#colonneGauche {
+  background: #16213e;
+  border-right: 2px solid #0f3460;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  gap: 12px;
+  overflow: hidden;
+}
+
+/* Bloc compteur de tour */
+#compteurTour {
+  background: #0f3460;
+  border-radius: 10px;
+  padding: 14px;
+  text-align: center;
+  border: 2px solid #e94560;
+}
+
+#labelTour {
+  font-size: 14px;
+  font-weight: bold;
+  color: #e94560;
+  margin-bottom: 6px;
+}
+
+#labelJoueur {
+  font-size: 13px;
+  color: #4cc9f0;
+  margin-bottom: 10px;
+}
+
+#btnFinTour {
+  width: 100%;
+  padding: 8px;
+  background: #e94560;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: 0.2s;
+}
+
+#btnFinTour:hover { background: #ff5f7a; }
+#btnFinTour:disabled { background: #555; cursor: not-allowed; }
+
+/* Bloc logs */
+#logsContainer {
+  flex: 1;
+  background: #0f3460;
+  border-radius: 10px;
+  padding: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#logsContainer h3 {
+  font-size: 13px;
+  color: #4cc9f0;
+  margin-bottom: 8px;
+}
+
+#logs {
+  flex: 1;
+  overflow-y: auto;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #ccc;
+}
+
+/* Une entrée de log */
+.log-entry {
+  padding: 4px 0;
+  border-bottom: 1px solid #1a1a2e;
+}
+
+/* ============================================================
+   COLONNE CENTRALE : Terrain
+============================================================ */
+#colonneCentrale {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Chaque terrain (J1 ou J2) prend la moitié de l'espace vertical */
+.terrain {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  gap: 6px;
+}
+
+/* J2 est en haut → ses éléments s'affichent du banc vers le combat (haut→bas) */
+#terrain-j2 {
+  flex-direction: column; /* banc → invoc → combat */
+  border-bottom: none;
+}
+
+/* J1 est en bas → combat → invoc → banc (bas = banc) */
+#terrain-j1 {
+  flex-direction: column; /* combat → invoc → banc */
+}
+
+/* Ligne de séparation entre les 2 terrains */
+#ligneSeparation {
+  height: 4px;
+  background: linear-gradient(90deg, transparent, #e94560, transparent);
+  flex-shrink: 0;
+}
+
+/* Label de zone (petit texte en haut de chaque zone) */
+.label-zone {
+  font-size: 10px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+
+/* ---- BANC ---- */
+.banc {
+  background: #0f3460;
+  border-radius: 8px;
+  padding: 6px;
+}
+
+.banc-slots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.banc-slot {
+  width: 90px;
+  height: 120px;
+  border: 2px dashed #4cc9f0;
+  border-radius: 8px;
+  background: rgba(76, 201, 240, 0.05);
+  position: relative; /* pour positionner les jetons par-dessus */
+}
+
+/* ---- ZONE COMBATTANT ---- */
+.zone-combattant {
+  background: rgba(233, 69, 96, 0.08);
+  border: 1px solid rgba(233, 69, 96, 0.3);
+  border-radius: 8px;
+  padding: 6px;
+}
+
+.combat-slots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.combat-slot {
+  width: 100px;
+  height: 130px;
+  border: 2px dashed #e94560;
+  border-radius: 8px;
+  background: rgba(233, 69, 96, 0.05);
+  position: relative;
+}
+
+/* ---- ZONE INVOCATION ---- */
+.zone-invocation {
+  background: rgba(76, 201, 240, 0.05);
+  border: 1px solid rgba(76, 201, 240, 0.2);
+  border-radius: 8px;
+  padding: 6px;
+}
+
+/* Grille 4 colonnes pour les invocations */
+.invoc-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 4px;
+}
+
+.invoc-cell {
+  height: 60px;
+  border: 1px dashed rgba(76, 201, 240, 0.3);
+  border-radius: 6px;
+  background: rgba(76, 201, 240, 0.03);
+  position: relative;
+}
+
+/* ============================================================
+   CARTES EN JEU
+============================================================ */
+
+/* Conteneur d'une carte posée sur le terrain */
+.carte-en-jeu {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  cursor: grab;
+}
+
+.carte-en-jeu img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+/* Barre de PV sous la carte */
+.barre-pv {
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+  right: 2px;
+  height: 6px;
+  background: #333;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.barre-pv-fill {
+  height: 100%;
+  background: #4cff72;
+  transition: width 0.3s;
+}
+
+/* PV texte affiché au survol */
+.pv-label {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  background: rgba(0,0,0,0.7);
+  padding: 1px 4px;
+  border-radius: 3px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: 0.2s;
+}
+
+.carte-en-jeu:hover .pv-label { opacity: 1; }
+
+/* Jetons de statut flottant au-dessus de la carte */
+.jetons-statut {
+  position: absolute;
+  top: -20px;
+  left: 0;
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+}
+
+.jeton-statut img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+/* Extensions : affichées juste au-dessus de la carte principale */
+.extensions-carte {
+  position: absolute;
+  top: -70px; /* au-dessus de la carte */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+}
+
+.extension-badge {
+  background: #0f3460;
+  border: 1px solid #4cc9f0;
+  border-radius: 6px;
+  padding: 2px 4px;
+  font-size: 10px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   TIROIR (panneau coulissant en bas)
+============================================================ */
+#tiroir {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #16213e;
+  border-top: 3px solid #4cc9f0;
+  border-radius: 12px 12px 0 0;
+  transition: transform 0.3s ease;
+  transform: translateY(calc(100% - 36px)); /* replié par défaut */
+  z-index: 10;
+}
+
+/* Le tiroir est ouvert quand la classe .ouvert est ajoutée */
+#tiroir.ouvert {
+  transform: translateY(0);
+}
+
+/* Poignée cliquable du tiroir */
+#tiroirHandle {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 13px;
+  color: #4cc9f0;
+  font-weight: bold;
+  user-select: none;
+}
+
+#tiroirContent {
+  padding: 10px;
+  max-height: 220px;
+}
+
+/* Onglets du tiroir */
+#tiroirOnglets {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.onglet {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 6px;
+  background: #0f3460;
+  color: #aaa;
+  cursor: pointer;
+  font-size: 13px;
+  transition: 0.2s;
+}
+
+.onglet.actif {
+  background: #4cc9f0;
+  color: #000;
+  font-weight: bold;
+}
+
+/* Contenu des onglets */
+.onglet-content {
+  display: none;
+  flex-wrap: wrap;
+  gap: 10px;
+  overflow-y: auto;
+  max-height: 150px;
+}
+
+.onglet-content.actif { display: flex; }
+
+/* Une carte/jeton dans le tiroir */
+.tiroir-item {
+  width: 70px;
+  text-align: center;
+  cursor: grab;
+  transition: transform 0.2s;
+}
+
+.tiroir-item:hover { transform: scale(1.1); }
+
+.tiroir-item img {
+  width: 100%;
+  border-radius: 6px;
+  border: 2px solid transparent;
+}
+
+.tiroir-item span {
+  display: block;
+  font-size: 10px;
+  color: #ccc;
+  margin-top: 3px;
+}
+
+/* ============================================================
+   COLONNE DROITE : Chat
+============================================================ */
+#colonneDroite {
+  background: #16213e;
+  border-left: 2px solid #0f3460;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+}
+
+#chatContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#chatContainer h3 {
+  font-size: 14px;
+  color: #4cc9f0;
+}
+
+#chatMessages {
+  flex: 1;
+  overflow-y: auto;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #ccc;
+  background: #0f3460;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+/* Un message dans le chat */
+.chat-message { padding: 3px 0; border-bottom: 1px solid #1a1a2e; }
+.chat-message .auteur { color: #e94560; font-weight: bold; }
+
+/* Zone de saisie */
+#chatInput {
+  display: flex;
+  gap: 6px;
+}
+
+#chatField {
+  flex: 1;
+  padding: 8px;
+  border-radius: 6px;
+  border: none;
+  background: #0f3460;
+  color: white;
+  font-size: 13px;
+}
+
+#btnEnvoyer {
+  padding: 8px 12px;
+  background: #e94560;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: 0.2s;
+}
+
+#btnEnvoyer:hover { background: #ff5f7a; }
+
+/* ============================================================
+   DRAG & DROP : visuels de feedback
+============================================================ */
+
+/* Zone qui accepte un drop → devient lumineuse au survol */
+.drop-target.drag-over {
+  border-color: #4cff72 !important;
+  background: rgba(76, 255, 114, 0.15) !important;
+}
+
+/* Élément en cours de drag → semi-transparent */
+.dragging { opacity: 0.4; }
+
+/* ============================================================
+   POPUP DE DETAIL DE CARTE (phase sélection)
+============================================================ */
+#popupCarte {
+  display: none; /* affiché via JS */
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+
+#popupInner {
+  background: #16213e;
+  border: 2px solid #e94560;
+  border-radius: 14px;
+  padding: 24px;
+  display: flex;
+  gap: 24px;
+  max-width: 700px;
+  width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* Bouton fermer */
+#popupClose {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 20px;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+}
+
+#popupClose:hover { color: white; }
+
+/* Image de la carte */
+#popupImage { flex-shrink: 0; }
+#popupImg {
+  width: 160px;
+  border-radius: 10px;
+  border: 2px solid #4cc9f0;
+}
+
+/* Infos */
+#popupInfos {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#popupNom { font-size: 20px; color: #e94560; }
+#popupClasse { font-size: 13px; color: #aaa; }
+
+/* Stats PV/DEF */
+#popupStats {
+  display: flex;
+  gap: 16px;
+}
+
+.stat-bloc {
+  background: #0f3460;
+  border-radius: 8px;
+  padding: 8px 16px;
+  text-align: center;
+}
+
+.stat-label { display: block; font-size: 11px; color: #aaa; }
+.stat-val   { display: block; font-size: 20px; font-weight: bold; color: #4cc9f0; }
+
+/* Extensions */
+.popup-extension {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  background: #0f3460;
+  padding: 6px;
+  border-radius: 6px;
+  margin-top: 4px;
+}
+
+.popup-extension img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+/* Statuts */
+.popup-statut-icon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  margin-right: 4px;
+}
+
+/* Annexes */
+.popup-annexe {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #0f3460;
+  padding: 6px;
+  border-radius: 6px;
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+.popup-annexe img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+/* Bouton choisir */
+#popupChoisir {
+  margin-top: auto;
+  padding: 10px;
+  background: #e94560;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+#popupChoisir:hover { background: #ff5f7a; }
+
+/* Bouton supprimer dans un slot */
+.slot-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(233,69,96,0.85);
+  border: none;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+}
+/* ============================================================
+   CARTES SUR LE TERRAIN
+============================================================ */
+.carte-terrain {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  position: relative;
+  cursor: pointer;
+}
+
+/* Image de la carte */
+.carte-image-wrap {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+.carte-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 6px;
+  transition: transform 0.2s;
+}
+
+.carte-terrain:hover .carte-img { transform: scale(1.05); }
+
+/* Barre de PV */
+.carte-pv-bar {
+  width: 90%;
+  height: 6px;
+  background: #333;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.carte-pv-fill {
+  height: 100%;
+  background: #4cff72;
+  border-radius: 3px;
+  transition: width 0.4s;
+}
+
+/* Couleur de la barre selon les PV restants */
+.carte-pv-fill[style*="width:1"],
+.carte-pv-fill[style*="width:2"],
+.carte-pv-fill[style*="width:3"] { background: #ff4c4c; }
+
+.carte-pv-texte {
+  font-size: 10px;
+  color: #ccc;
+}
+
+/* Nom de la carte */
+.carte-nom {
+  font-size: 10px;
+  color: #eee;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Statuts actifs */
+.carte-statuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  justify-content: center;
+}
+
+.statut-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+/* Carte KO */
+.carte-ko {
+  opacity: 0.35;
+  filter: grayscale(1);
+  pointer-events: none;
+}
+
+/* Carte en cours de drag */
+.carte-terrain.dragging { opacity: 0.3; }
+/* ============================================================
+   DRAG & DROP
+============================================================ */
+
+/* Carte en cours de drag : transparente */
+.dragging {
+  opacity: 0.3;
+  cursor: grabbing;
+}
+
+/* Slot survolé pendant un drag */
+.drop-survol {
+  border-color: #4cff72 !important;
+  background: rgba(76, 255, 114, 0.15) !important;
+  transform: scale(1.03);
+  transition: 0.15s;
+}
+
+/* Slots valides illuminés pendant le drag */
+.slot-highlight {
+  border-color: rgba(76, 201, 240, 0.8) !important;
+  box-shadow: 0 0 8px rgba(76, 201, 240, 0.4);
+  transition: 0.2s;
+}
+/* ============================================================
+   NOTIFICATIONS TOAST
+============================================================ */
+.toast-notif {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #e94560;
+  color: white;
+  padding: 10px 24px;
+  border-radius: 20px;
+  font-size: 14px;
+  opacity: 0;
+  transition: opacity 0.3s, transform 0.3s;
+  z-index: 999;
+  pointer-events: none;
+}
+
+/* Toast visible */
+.toast-notif.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}

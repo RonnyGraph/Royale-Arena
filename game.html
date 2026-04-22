@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Royale Arena - Partie</title>
+  <link rel="stylesheet" href="game.css">
+</head>
+<body>
+
+  <!-- ============================================================
+       OVERLAY DE SELECTION D'EQUIPE
+       Affiché au début, masqué une fois les 2 joueurs prêts
+  ============================================================ -->
+  <div id="overlaySelection">
+    <div id="selectionPanel">
+
+      <!-- 3 emplacements de prévisualisation des cartes choisies -->
+      <div id="selectionSlots">
+        <div class="selection-slot" data-slot="0">
+          <span>Carte 1</span>
+        </div>
+        <div class="selection-slot" data-slot="1">
+          <span>Carte 2</span>
+        </div>
+        <div class="selection-slot" data-slot="2">
+          <span>Carte 3</span>
+        </div>
+      </div>
+
+      <!-- Galerie de cartes disponibles -->
+      <div id="selectionGalerie">
+        <input type="text" id="searchCartes" placeholder="🔍 Rechercher une carte...">
+        <div id="galerieGrid">
+          <!-- Cartes chargées dynamiquement depuis Firestore -->
+        </div>
+      </div>
+
+      <button id="btnPret">✅ Je suis prêt !</button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       PAGE DE JEU PRINCIPALE
+  ============================================================ -->
+  <div id="pageJeu">
+
+    <!-- ==================== COLONNE GAUCHE ====================
+         Compteur de tour + Logs
+    =========================================================== -->
+    <div id="colonneGauche">
+
+      <!-- Compteur de tour -->
+      <div id="compteurTour">
+        <div id="labelTour">Tour de Placement</div>
+        <div id="labelJoueur">En attente...</div>
+        <button id="btnFinTour">⏭️ Fin de mon tour</button>
+      </div>
+
+      <!-- Logs de la partie -->
+      <div id="logsContainer">
+        <h3>📋 Journal</h3>
+        <div id="logs">
+          <!-- Entrées de log ajoutées dynamiquement -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ==================== COLONNE CENTRALE ====================
+         Le terrain de jeu
+    ============================================================ -->
+    <div id="colonneCentrale">
+
+      <!-- TERRAIN JOUEUR 2 (en haut pour J1, en bas pour J2) -->
+      <div class="terrain" id="terrain-j2">
+
+        <!-- Banc J2 : 3 emplacements -->
+        <div class="banc" id="banc-j2">
+          <div class="label-zone">Banc J2</div>
+          <div class="banc-slots">
+            <div class="banc-slot" data-joueur="j2" data-index="0"></div>
+            <div class="banc-slot" data-joueur="j2" data-index="1"></div>
+            <div class="banc-slot" data-joueur="j2" data-index="2"></div>
+          </div>
+        </div>
+
+        <!-- Zone d'invocation J2 : grille 4 colonnes x 3 lignes -->
+        <div class="zone-invocation" id="invoc-j2">
+          <div class="label-zone">Zone d'Invocation J2</div>
+          <div class="invoc-grid">
+            <!-- 12 cases générées dynamiquement en JS -->
+          </div>
+        </div>
+
+        <!-- Zone combattant J2 : 3 emplacements -->
+        <div class="zone-combattant" id="combat-j2">
+          <div class="label-zone">Combattants J2</div>
+          <div class="combat-slots">
+            <div class="combat-slot" data-joueur="j2" data-index="0"></div>
+            <div class="combat-slot" data-joueur="j2" data-index="1"></div>
+            <div class="combat-slot" data-joueur="j2" data-index="2"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- LIGNE DE SEPARATION -->
+      <div id="ligneSeparation"></div>
+
+      <!-- TERRAIN JOUEUR 1 (en bas pour J1, en haut pour J2) -->
+      <div class="terrain" id="terrain-j1">
+
+        <!-- Zone combattant J1 -->
+        <div class="zone-combattant" id="combat-j1">
+          <div class="label-zone">Combattants J1</div>
+          <div class="combat-slots">
+            <div class="combat-slot" data-joueur="j1" data-index="0"></div>
+            <div class="combat-slot" data-joueur="j1" data-index="1"></div>
+            <div class="combat-slot" data-joueur="j1" data-index="2"></div>
+          </div>
+        </div>
+
+        <!-- Zone d'invocation J1 -->
+        <div class="zone-invocation" id="invoc-j1">
+          <div class="label-zone">Zone d'Invocation J1</div>
+          <div class="invoc-grid">
+            <!-- 12 cases générées dynamiquement en JS -->
+          </div>
+        </div>
+
+        <!-- Banc J1 -->
+        <div class="banc" id="banc-j1">
+          <div class="label-zone">Banc J1</div>
+          <div class="banc-slots">
+            <div class="banc-slot" data-joueur="j1" data-index="0"></div>
+            <div class="banc-slot" data-joueur="j1" data-index="1"></div>
+            <div class="banc-slot" data-joueur="j1" data-index="2"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ==================== TIROIR ====================
+           Panneau coulissant en bas avec les cartes/jetons
+      ==================================================== -->
+      <div id="tiroir">
+        <div id="tiroirHandle">▲ Mes ressources</div>
+        <div id="tiroirContent">
+
+          <!-- Onglets du tiroir -->
+          <div id="tiroirOnglets">
+            <button class="onglet actif" data-onglet="invocations">🌀 Invocations</button>
+            <button class="onglet" data-onglet="jetons">🪙 Jetons</button>
+          </div>
+
+          <!-- Contenu : Invocations -->
+          <div class="onglet-content actif" id="onglet-invocations">
+            <!-- Cartes d'invocation chargées depuis Firestore selon l'équipe -->
+          </div>
+
+          <!-- Contenu : Jetons de statut -->
+          <div class="onglet-content" id="onglet-jetons">
+            <!-- Jetons de statut disponibles selon les cartes de l'équipe -->
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ==================== COLONNE DROITE ====================
+         Chat de la partie
+    =========================================================== -->
+    <div id="colonneDroite">
+      <div id="chatContainer">
+        <h3>💬 Chat</h3>
+        <div id="chatMessages">
+          <!-- Messages chargés en temps réel -->
+        </div>
+        <div id="chatInput">
+          <input type="text" id="chatField" placeholder="Écrire un message...">
+          <button id="btnEnvoyer">Envoyer</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- fin pageJeu -->
+
+  <script type="module" src="game.js"></script>
+</body>
+</html>
