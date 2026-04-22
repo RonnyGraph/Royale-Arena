@@ -469,71 +469,115 @@ function creerCarteEtat(carte, position) {
 
 
 // ============================================================
-// 3A - RENDU VISUEL DU TERRAIN
+// RENDU VISUEL DU TERRAIN
+// Corrigé pour coller aux vrais IDs et classes du HTML
 // ============================================================
 
 /**
  * Redessine tout le terrain (les 2 côtés)
- * Appelée à chaque changement d'état
  */
 function rendreTerrainComplet() {
-  rendreLigne('combattants', MON_ROLE);
-  rendreLigne('combattants', ADVERSAIRE);
-  rendreLigne('invocations', MON_ROLE);
-  rendreLigne('invocations', ADVERSAIRE);
+  rendreCombattants(MON_ROLE);
+  rendreCombattants(ADVERSAIRE);
+  rendreInvocations(MON_ROLE);
+  rendreInvocations(ADVERSAIRE);
   rendreBanc(MON_ROLE);
   rendreBanc(ADVERSAIRE);
 }
 
 
 /**
- * Rend une ligne de combattants ou d'invocations pour un joueur
- * @param {string} type   - "combattants" | "invocations"
+ * Rend la zone combattants d'un joueur
  * @param {string} joueur - "j1" | "j2"
  */
-function rendreLigne(type, joueur) {
-  // Sélection de la bonne ligne dans le DOM
-  // Les IDs sont construits comme "combattants-j1", "invocations-j2", etc.
-  const ligne = document.getElementById(`${type}-${joueur}`);
-  if (!ligne) return;
+function rendreCombattants(joueur) {
+  // L'ID HTML est "combat-j1" ou "combat-j2"
+  const zone = document.getElementById(`combat-${joueur}`);
+  if (!zone) return;
 
-  const cases = ligne.querySelectorAll('.case');
-  const donnees = ETAT.terrain[joueur][type];
+  // Les slots sont les div.combat-slot à l'intérieur
+  const slots = zone.querySelectorAll('.combat-slot');
+  const donnees = ETAT.terrain[joueur].combattants;
 
-  cases.forEach((caseEl, i) => {
-    caseEl.innerHTML = '';          // on vide la case
-    const carteEtat = donnees[i];   // carte présente à cet index (ou null)
+  slots.forEach((slot, i) => {
+    slot.innerHTML = ''; // vider le slot
 
-    if (carteEtat) {
-      // Il y a une carte → on crée son rendu
-      caseEl.appendChild(creerElementCarte(carteEtat, joueur, type, i));
+    const carteEtat = donnees[i];
+    if (!carteEtat) return; // slot vide → on laisse vide
+
+    // Créer l'élément carte et l'injecter
+    const el = creerElementCarte(carteEtat, joueur, 'combattant', i);
+    slot.appendChild(el);
+  });
+}
+
+
+/**
+ * Rend la zone invocations d'un joueur
+ * Les cases sont générées dynamiquement si elles n'existent pas encore
+ * @param {string} joueur - "j1" | "j2"
+ */
+function rendreInvocations(joueur) {
+  // L'ID HTML est "invoc-j1" ou "invoc-j2"
+  const zone = document.getElementById(`invoc-${joueur}`);
+  if (!zone) return;
+
+  const grid = zone.querySelector('.invoc-grid');
+  if (!grid) return;
+
+  const donnees = ETAT.terrain[joueur].invocations;
+
+  // Générer les 12 cases si elles n'existent pas encore
+  if (grid.children.length === 0) {
+    for (let i = 0; i < 12; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'invoc-cell';
+      cell.dataset.joueur = joueur;
+      cell.dataset.index  = i;
+      grid.appendChild(cell);
     }
+  }
+
+  // Remplir chaque case
+  const cells = grid.querySelectorAll('.invoc-cell');
+  cells.forEach((cell, i) => {
+    cell.innerHTML = '';
+
+    const carteEtat = donnees[i];
+    if (!carteEtat) return;
+
+    const el = creerElementCarte(carteEtat, joueur, 'invocation', i);
+    cell.appendChild(el);
   });
 }
 
 
 /**
  * Rend le banc d'un joueur
+ * Les cartes adverses sur le banc sont masquées (dos de carte)
  * @param {string} joueur - "j1" | "j2"
  */
 function rendreBanc(joueur) {
-  const banc = document.getElementById(`banc-${joueur}`);
-  if (!banc) return;
+  // L'ID HTML est "banc-j1" ou "banc-j2"
+  const zone = document.getElementById(`banc-${joueur}`);
+  if (!zone) return;
 
-  const cases = banc.querySelectorAll('.case');
+  const slots = zone.querySelectorAll('.banc-slot');
   const donnees = ETAT.terrain[joueur].banc;
 
-  cases.forEach((caseEl, i) => {
-    caseEl.innerHTML = '';
-    const carteEtat = donnees[i];
+  slots.forEach((slot, i) => {
+    slot.innerHTML = '';
 
-    if (carteEtat) {
-      // Sur le banc de l'adversaire, on masque l'image (dos de carte)
-      const masquer = (joueur === ADVERSAIRE);
-      caseEl.appendChild(creerElementCarte(carteEtat, joueur, 'banc', i, masquer));
-    }
+    const carteEtat = donnees[i];
+    if (!carteEtat) return;
+
+    // Les cartes adverses sur le banc sont masquées
+    const masquer = (joueur !== MON_ROLE);
+    const el = creerElementCarte(carteEtat, joueur, 'banc', i, masquer);
+    slot.appendChild(el);
   });
 }
+
 
 
 /**
@@ -841,9 +885,10 @@ function ecouterTerrainAdverse() {
     ETAT.terrain[ADVERSAIRE].invocations = data.invocations ?? Array(12).fill(null);
 
     // Re-rendre uniquement le terrain adverse
-    rendreLigne('banc',        ADVERSAIRE, 'banc-slot',    'banc');
-    rendreLigne('combattants', ADVERSAIRE, 'combat-slot',  'combattant');
-    rendreLigne('invocations', ADVERSAIRE, 'invoc-cell',   'invocation');
+    rendreBanc(ADVERSAIRE);
+rendreCombattants(ADVERSAIRE);
+rendreInvocations(ADVERSAIRE);
+
   });
 }
 
