@@ -3,8 +3,18 @@
 // ============================================================
 import { db } from './firebase-config.js';
 import {
-  collection, getDocs, doc, setDoc, onSnapshot, getDoc
+  collection,
+  getDocs,
+  doc,
+  setDoc,
+  onSnapshot,
+  getDoc,
+  updateDoc,  // manquait → pour finirMonTour, passerTourSuivant, dpenserPA
+  addDoc,     // manquait → pour ajouterLog et envoyerMessage
+  query,      // manquait → pour ecouterLogs et ecouterChat
+  orderBy     // manquait → pour trier les logs/messages par timestamp
 } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
 
 
 // ============================================================
